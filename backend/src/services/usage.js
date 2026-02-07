@@ -72,12 +72,15 @@ export async function getTierConfig(user) {
   if (user.is_admin) {
     return {
       ...TIER_CONFIGS.byok,
-      tier: user.api_key_encrypted ? 'byok' : user.subscription_status === 'active' ? 'active' : 'trial',
+      tier: 'max',
       is_admin: true,
       analysis_limit: 999999,
       chat_limit: 999999,
+      outreach_limit: 999999,
       chat_enabled: true,
       show_byok: true,
+      show_outreach: true,
+      show_tracker: true,
       show_chat_counter: false,
     }
   }
