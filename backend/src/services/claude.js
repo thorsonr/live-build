@@ -338,7 +338,7 @@ Be specific and actionable. Reference actual contacts where relevant.`
  * Generate two LinkedIn outreach message variants for a contact.
  * Uses Haiku for fast, cost-effective generation.
  */
-export async function generateOutreachMessages({ contact, userContext, userId }) {
+export async function generateOutreachMessages({ contact, userContext, tone = 'professional', length = 'medium', userId }) {
   const aiConfig = await getModelForFeature(userId, 'outreach_message')
 
   if (!aiConfig.apiKey) {
@@ -346,6 +346,9 @@ export async function generateOutreachMessages({ contact, userContext, userId })
   }
 
   const client = new Anthropic({ apiKey: aiConfig.apiKey })
+
+  const lengthGuide = { short: '~50 words', medium: '~100 words', long: '~200 words' }
+  const lengthText = lengthGuide[length] || lengthGuide.medium
 
   const prompt = `You are an expert at writing LinkedIn outreach messages that get responses. Generate exactly 2 message variants for the following contact.
 
@@ -360,14 +363,18 @@ ${contact.contextHook ? `Context: ${contact.contextHook}` : ''}
 USER'S GOAL:
 ${userContext || 'Reconnect and explore mutual opportunities'}
 
+TONE: ${tone}
+LENGTH: approximately ${lengthText} per message
+
 RULES:
-- Each message should be 2-4 short paragraphs, suitable for LinkedIn messaging
-- Variant A: More direct and professional
+- Each message should be suitable for LinkedIn messaging
+- Variant A: More direct and to-the-point
 - Variant B: More warm and conversational
+- Match the requested tone: ${tone}
+- Match the requested length: approximately ${lengthText}
 - Reference specific details about the contact when possible
 - End each with a clear, low-pressure call to action
 - Do NOT use generic templates — make each feel personal
-- Keep each message under 300 words
 
 Respond with ONLY valid JSON in this exact format:
 {

@@ -53,6 +53,12 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
   - Recruiter connections that could be reactivated with minimal effort
   - Opportunity to bridge their existing network toward their next career move
 
+**Write "Do Next" action items:**
+- `do_next_items`: 3-5 specific, actionable items derived from the analysis. Each item should point the user toward a specific section of the dashboard. Examples: "Reconnect with 12 dormant VPs in your network", "Review your top advocate cluster for recommendation gaps", "Check how LinkedIn categorizes your seniority level". Each item needs: `action` (what to do), `why` (1 sentence on why it matters), `target_tab` (which tab to navigate to: network, relationships, skills, content, advocates, priorities, messages, inferences, contacts).
+
+**Write "Top Opportunities" contacts:**
+- `top_opportunities`: The 3 most valuable contacts worth engaging right now. These should be real people from the connections data. Each needs: `name`, `company`, `role` (their title), `reason` (why they're a top opportunity right now), `suggested_action` (specific next step, e.g., "Send a congratulatory message about their recent role change").
+
 **Output format:**
 ```json
 {
@@ -60,7 +66,13 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
     "report_headline": "string",
     "report_body": "string",
     "key_insight": "string"
-  }
+  },
+  "do_next_items": [
+    { "action": "string", "why": "string", "target_tab": "string" }
+  ],
+  "top_opportunities": [
+    { "name": "string", "company": "string", "role": "string", "reason": "string", "suggested_action": "string" }
+  ]
 }
 ```
 
@@ -73,8 +85,8 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
 
 ### What to produce
 
-**Write editorial insight (1-2 paragraphs):**
-- `network_shape_insight`: Analyze the composition. Key questions to address:
+**Write structured editorial insight:**
+- `network_shape_insight`: Return a 3-part structured object analyzing the composition. Key questions to address:
   - Is this network deep (concentrated in a few ecosystems) or broad (spread across many)?
   - What's the concentration risk? If their top company represents >15% of their network, flag it as single-employer dependency.
   - What industries or sectors are conspicuously absent?
@@ -84,7 +96,11 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
 **Output format:**
 ```json
 {
-  "network_shape_insight": "string"
+  "network_shape_insight": {
+    "key_insight": "string (the main finding about network shape)",
+    "why_it_matters": "string (context and impact of this finding)",
+    "suggested_action": "string (specific step to take)"
+  }
 }
 ```
 
@@ -97,8 +113,8 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
 
 ### What to produce
 
-**Write "The Opportunity" insight (2-3 sentences):**
-- `opportunity_insight`: Frame the dormant network as unrealized potential. Most professionals message fewer than 15% of their connections — normalize this. Then make it encouraging and specific: reference the actual numbers of executives, recruiters, and former colleagues in their network who represent reachable opportunities. The message should feel like "you've built something valuable — here's how to unlock it."
+**Write structured "The Opportunity" insight:**
+- `opportunity_insight`: Return a 3-part structured object. Frame the dormant network as unrealized potential. Most professionals message fewer than 15% of their connections — normalize this. Then make it encouraging and specific: reference the actual numbers of executives, recruiters, and former colleagues in their network who represent reachable opportunities. The message should feel like "you've built something valuable — here's how to unlock it."
 
 **If Messages.csv is unavailable:**
 - State clearly that relationship depth analysis requires message history
@@ -108,7 +124,11 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
 **Output format:**
 ```json
 {
-  "opportunity_insight": "string"
+  "opportunity_insight": {
+    "key_insight": "string (the main relationship finding)",
+    "why_it_matters": "string (context about the dormant network opportunity)",
+    "suggested_action": "string (specific step to reactivate relationships)"
+  }
 }
 ```
 
@@ -121,8 +141,8 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
 
 ### What to produce
 
-**Write Expertise Insight (2-3 sentences):**
-- `expertise_insight`: Compare listed skills vs. what gets endorsed. Key things to surface:
+**Write structured Expertise Insight:**
+- `expertise_insight`: Return a 3-part structured object. Compare listed skills vs. what gets endorsed. Key things to surface:
   - **Perception gap:** Are the skills listed as primary also the ones most endorsed? If not, the market sees them differently.
   - **Endorsement concentration:** Are endorsements from a diverse set of people or just a few power-endorsers?
   - **Missing endorsements:** High-value skills with zero or very few endorsements are credibility gaps.
@@ -131,7 +151,11 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
 **Output format:**
 ```json
 {
-  "expertise_insight": "string"
+  "expertise_insight": {
+    "key_insight": "string (the main expertise finding)",
+    "why_it_matters": "string (impact on professional perception)",
+    "suggested_action": "string (specific step to address the gap)"
+  }
 }
 ```
 
@@ -147,8 +171,8 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
 **Identify Content Themes (AI is better at this than local computation):**
 - `content_themes`: Analyze post text/titles to identify recurring themes. Return top 6 themes as array of `{theme, post_count}`. Common theme buckets: AI/GenAI, Leadership, Digital Transformation, Industry-specific, Career/Professional Development, Innovation, Data/Analytics, Change Management, Strategy, Culture, Technology Trends.
 
-**Write Content Strategy Insight (2-3 sentences):**
-- `content_strategy_insight`: Evaluate the user's content presence:
+**Write structured Content Strategy Insight:**
+- `content_strategy_insight`: Return a 3-part structured object. Evaluate the user's content presence:
   - **Activity level:** Active creator (3+ posts/month), occasional (1-2/month), or dormant (<1/month)?
   - **Theme focus vs. scatter:** Clear content identity, or posting about everything?
   - **Recency:** Gone quiet recently? Visibility decays fast on LinkedIn.
@@ -162,7 +186,11 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
 ```json
 {
   "content_themes": [{"theme": "string", "post_count": number}, ...],
-  "content_strategy_insight": "string"
+  "content_strategy_insight": {
+    "key_insight": "string (the main content finding)",
+    "why_it_matters": "string (impact on visibility and thought leadership)",
+    "suggested_action": "string (specific content strategy step)"
+  }
 }
 ```
 
@@ -175,8 +203,8 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
 
 ### What to produce
 
-**Write Advocate Analysis (2-3 sentences):**
-- `advocate_insight`: Analyze the recommendation corpus:
+**Write structured Advocate Analysis:**
+- `advocate_insight`: Return a 3-part structured object. Analyze the recommendation corpus:
   - **Recurring themes:** What words/phrases appear across multiple recommendations? These reveal perceived brand.
   - **Seniority of advocates:** Mostly peers/reports, or senior leaders? Upward recommendations carry more weight.
   - **Company diversity:** All from one employer = single-context endorsement. Multiple companies = consistent performance.
@@ -189,7 +217,11 @@ You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intel
 **Output format:**
 ```json
 {
-  "advocate_insight": "string"
+  "advocate_insight": {
+    "key_insight": "string (the main advocacy finding)",
+    "why_it_matters": "string (impact on professional credibility)",
+    "suggested_action": "string (specific step to strengthen advocacy)"
+  }
 }
 ```
 
@@ -283,23 +315,25 @@ Return a single JSON object with screens 1-8. Screens 1-6 contain ONLY editorial
 {
   "screens": {
     "summary": {
-      "executive_summary": {"report_headline": "...", "report_body": "...", "key_insight": "..."}
+      "executive_summary": {"report_headline": "...", "report_body": "...", "key_insight": "..."},
+      "do_next_items": [{"action": "...", "why": "...", "target_tab": "..."}],
+      "top_opportunities": [{"name": "...", "company": "...", "role": "...", "reason": "...", "suggested_action": "..."}]
     },
     "network": {
-      "network_shape_insight": "..."
+      "network_shape_insight": {"key_insight": "...", "why_it_matters": "...", "suggested_action": "..."}
     },
     "relationships": {
-      "opportunity_insight": "..."
+      "opportunity_insight": {"key_insight": "...", "why_it_matters": "...", "suggested_action": "..."}
     },
     "skills_expertise": {
-      "expertise_insight": "..."
+      "expertise_insight": {"key_insight": "...", "why_it_matters": "...", "suggested_action": "..."}
     },
     "your_content": {
       "content_themes": [...],
-      "content_strategy_insight": "..."
+      "content_strategy_insight": {"key_insight": "...", "why_it_matters": "...", "suggested_action": "..."}
     },
     "your_advocates": {
-      "advocate_insight": "..."
+      "advocate_insight": {"key_insight": "...", "why_it_matters": "...", "suggested_action": "..."}
     },
     "priorities": {
       "outreach_priorities": [...],

@@ -6,6 +6,51 @@ import OutreachDrafter from './OutreachDrafter'
 import StrategyAnalysis from './StrategyAnalysis'
 import AIInsightCard, { stripMarkdown } from './AIInsightCard'
 import MessageGenerator from './MessageGenerator'
+import TrackerTab from './TrackerTab'
+import { api } from '../lib/api'
+
+/**
+ * StructuredInsightCard — renders a 3-part AI insight (key_insight, why_it_matters, suggested_action).
+ * Falls back to plain string rendering for backward compatibility with old analyses.
+ */
+function StructuredInsightCard({ insight, label }) {
+  if (!insight) return null
+
+  // Backward compat: if insight is a plain string, render via AIInsightCard
+  if (typeof insight === 'string') {
+    return <AIInsightCard insight={insight} label={label} />
+  }
+
+  // Structured 3-part object
+  const { key_insight, why_it_matters, suggested_action } = insight
+  if (!key_insight) return <AIInsightCard insight={JSON.stringify(insight)} label={label} />
+
+  return (
+    <div className="ai-insight-card">
+      <div className="text-xs font-semibold tracking-wider uppercase text-live-accent mb-3">
+        {label || 'AI INSIGHT'}
+      </div>
+      <div className="space-y-3">
+        <div>
+          <div className="text-xs font-semibold uppercase text-live-text-secondary mb-1">Key Insight</div>
+          <p className="text-sm font-medium leading-relaxed text-live-text">{stripMarkdown(key_insight)}</p>
+        </div>
+        {why_it_matters && (
+          <div>
+            <div className="text-xs font-semibold uppercase text-live-text-secondary mb-1">Why It Matters</div>
+            <p className="text-sm leading-relaxed text-live-text-secondary">{stripMarkdown(why_it_matters)}</p>
+          </div>
+        )}
+        {suggested_action && (
+          <div className="p-3 rounded-lg bg-live-accent/10 border-l-4 border-live-accent">
+            <div className="text-xs font-semibold uppercase text-live-accent mb-1">Suggested Action</div>
+            <p className="text-sm leading-relaxed text-live-text">{stripMarkdown(suggested_action)}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function SampleCTAModal({ onClose }) {
   return (
@@ -31,7 +76,7 @@ function SampleCTAModal({ onClose }) {
   )
 }
 
-export default function NetworkAnalytics({ data, activeTab, user, settings, onExportCSV, sampleMode = false, sampleMessages = null }) {
+export default function NetworkAnalytics({ data, activeTab, user, settings, onExportCSV, sampleMode = false, sampleMessages = null, onNavigate }) {
   const { contacts, analytics, aiAnalysis } = data
   const [selectedContact, setSelectedContact] = useState(null)
   const [showStrategy, setShowStrategy] = useState(false)
@@ -42,7 +87,7 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, onEx
   return (
     <div>
       {activeTab === 'summary' && (
-        <SummaryTab analytics={analytics} aiScreen={ai('summary')} />
+        <SummaryTab analytics={analytics} aiScreen={ai('summary')} onNavigate={onNavigate} settings={settings} />
       )}
       {activeTab === 'network' && (
         <NetworkTab analytics={analytics} aiScreen={ai('network')} />
@@ -60,7 +105,7 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, onEx
         <AdvocatesTab analytics={analytics} aiScreen={ai('your_advocates')} />
       )}
       {activeTab === 'priorities' && (
-        <PrioritiesTab analytics={analytics} contacts={contacts} aiScreen={ai('priorities')} />
+        <PrioritiesTab analytics={analytics} contacts={contacts} aiScreen={ai('priorities')} settings={settings} />
       )}
       {activeTab === 'messages' && (
         <MessageGenerator
@@ -69,6 +114,32 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, onEx
           sampleMode={sampleMode}
           sampleMessages={sampleMessages}
         />
+      )}
+      {activeTab === 'tracker' && (
+        settings?.show_tracker ? (
+          <TrackerTab sampleMode={sampleMode} />
+        ) : (
+          <div>
+            <div className="section-label">Engagement Tracker</div>
+            <h2 className="section-title mb-2">Track Your Outreach</h2>
+            <p className="text-live-text-secondary mb-6">Keep track of your outreach pipeline from first contact to meeting.</p>
+            <div className="card">
+              <div className="card-body text-center py-12 px-8">
+                <div className="text-4xl mb-4">&#128202;</div>
+                <h3 className="font-display text-lg font-semibold mb-3 text-live-text">
+                  Unlock the Engagement Tracker
+                </h3>
+                <p className="text-sm text-live-text-secondary mb-6 max-w-md mx-auto">
+                  Upgrade to Max to track your outreach pipeline with a mini-CRM.
+                  Manage contacts from identification through to meetings and closed deals.
+                </p>
+                <a href="#upgrade" className="btn btn-primary inline-block">
+                  Upgrade to Max
+                </a>
+              </div>
+            </div>
+          </div>
+        )
       )}
       {activeTab === 'inferences' && (
         <InferencesTab analytics={analytics} aiScreen={ai('linkedins_view')} />
@@ -86,7 +157,7 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, onEx
               </button>
             )}
           </div>
-          <ContactGrid contacts={contacts} onSelectContact={setSelectedContact} />
+          <ContactGrid contacts={contacts} onSelectContact={setSelectedContact} settings={settings} />
         </div>
       )}
 
@@ -106,7 +177,7 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, onEx
 // ============================================
 // SUMMARY TAB
 // ============================================
-function SummaryTab({ analytics, aiScreen }) {
+function SummaryTab({ analytics, aiScreen, onNavigate, settings }) {
   const categoryChartRef = useRef(null)
   const timelineChartRef = useRef(null)
   const chartInstances = useRef({})
@@ -257,6 +328,68 @@ function SummaryTab({ analytics, aiScreen }) {
           </div>
         </div>
       </div>
+
+      {/* Do Next Items */}
+      {aiScreen?.do_next_items?.length > 0 && (
+        <div className="card mt-6">
+          <div className="card-header">Do Next</div>
+          <div className="card-body">
+            <div className="space-y-3">
+              {aiScreen.do_next_items.map((item, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-live-bg-warm transition-colors">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-live-accent/20 text-live-accent flex items-center justify-center text-xs font-bold mt-0.5">
+                    {i + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-live-text">{stripMarkdown(item.action)}</p>
+                    {item.why && (
+                      <p className="text-xs text-live-text-secondary mt-0.5">{stripMarkdown(item.why)}</p>
+                    )}
+                  </div>
+                  {item.target_tab && onNavigate && (
+                    <button
+                      onClick={() => onNavigate(item.target_tab)}
+                      className="flex-shrink-0 text-live-accent hover:text-live-text text-sm px-2 py-1 rounded hover:bg-live-accent/10 transition-colors"
+                      title={`Go to ${item.target_tab}`}
+                    >
+                      &rarr;
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top Opportunities */}
+      {aiScreen?.top_opportunities?.length > 0 && (
+        <div className="mt-6">
+          <div className="section-label">Top Opportunities</div>
+          <div className="grid md:grid-cols-3 gap-4">
+            {aiScreen.top_opportunities.map((opp, i) => (
+              <div key={i} className="card border-l-4 border-l-live-accent">
+                <div className="card-body">
+                  <p className="font-semibold text-sm text-live-text">{opp.name}</p>
+                  <p className="text-xs text-live-text-secondary">
+                    {opp.role}{opp.company ? ` at ${opp.company}` : ''}
+                  </p>
+                  <p className="text-sm text-live-text-secondary mt-2">{stripMarkdown(opp.reason)}</p>
+                  <p className="text-xs text-live-accent mt-2 font-medium">{stripMarkdown(opp.suggested_action)}</p>
+                  {settings?.show_outreach && onNavigate && (
+                    <button
+                      onClick={() => onNavigate('messages')}
+                      className="mt-3 text-xs px-3 py-1 border border-live-accent text-live-accent rounded-lg hover:bg-live-accent/10 transition-colors"
+                    >
+                      Draft Outreach
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -374,7 +507,7 @@ function NetworkTab({ analytics, aiScreen }) {
 
       {/* AI Insight Card */}
       {aiScreen?.network_shape_insight && (
-        <AIInsightCard insight={aiScreen.network_shape_insight} label="NETWORK SHAPE INSIGHT" />
+        <StructuredInsightCard insight={aiScreen.network_shape_insight} label="NETWORK SHAPE INSIGHT" />
       )}
 
       {/* Concentration Analysis */}
@@ -503,7 +636,7 @@ function RelationshipsTab({ analytics, contacts, aiScreen }) {
 
       {/* Editorial — AI replaces hardcoded "The Opportunity" block */}
       {opportunityInsight ? (
-        <AIInsightCard insight={opportunityInsight} label="THE OPPORTUNITY" />
+        <StructuredInsightCard insight={opportunityInsight} label="THE OPPORTUNITY" />
       ) : (
         <div className="bg-live-primary text-white p-6 rounded-xl mb-6">
           <div className="text-xs font-semibold tracking-wider uppercase text-live-accent mb-2">The Opportunity</div>
@@ -647,7 +780,7 @@ function SkillsTab({ analytics, aiScreen }) {
 
       {/* AI Insight Card — below endorsers */}
       {aiScreen?.expertise_insight && (
-        <AIInsightCard insight={aiScreen.expertise_insight} label="EXPERTISE INSIGHT" />
+        <StructuredInsightCard insight={aiScreen.expertise_insight} label="EXPERTISE INSIGHT" />
       )}
 
       {/* Top Endorsers */}
@@ -824,7 +957,7 @@ function ContentTab({ analytics, aiScreen }) {
 
       {/* Editorial — AI replaces hardcoded content strategy block */}
       {contentInsight ? (
-        <AIInsightCard insight={contentInsight} label="CONTENT STRATEGY INSIGHT" />
+        <StructuredInsightCard insight={contentInsight} label="CONTENT STRATEGY INSIGHT" />
       ) : (
         <div className="bg-live-primary text-white p-6 rounded-xl">
           <div className="text-xs font-semibold tracking-wider uppercase text-live-accent mb-2">Content Strategy Insight</div>
@@ -855,7 +988,7 @@ function AdvocatesTab({ analytics, aiScreen }) {
 
       {/* AI Insight Card — above recommendations */}
       {aiScreen?.advocate_insight && (
-        <AIInsightCard insight={aiScreen.advocate_insight} label="ADVOCATE INSIGHT" />
+        <StructuredInsightCard insight={aiScreen.advocate_insight} label="ADVOCATE INSIGHT" />
       )}
 
       {/* Stats */}
@@ -909,7 +1042,22 @@ function AdvocatesTab({ analytics, aiScreen }) {
 // ============================================
 // PRIORITIES TAB
 // ============================================
-function PrioritiesTab({ analytics, contacts, aiScreen }) {
+function PrioritiesTab({ analytics, contacts, aiScreen, settings }) {
+  const [trackerAdded, setTrackerAdded] = useState({})
+
+  const handleAddToTracker = async (contact) => {
+    if (!settings?.show_tracker) return
+    try {
+      await api.addToTracker({
+        contact_name: contact.name,
+        contact_company: contact.company || '',
+        contact_position: contact.title || contact.position || '',
+      })
+      setTrackerAdded(prev => ({ ...prev, [contact.name]: true }))
+    } catch (err) {
+      console.error('Failed to add to tracker:', err)
+    }
+  }
   const catNames = Object.keys(analytics.categoryCounts)
 
   // Use AI priorities if available, otherwise fall back to local scoring
@@ -952,7 +1100,8 @@ function PrioritiesTab({ analytics, contacts, aiScreen }) {
                 <th className="pb-3 pr-4">Name</th>
                 <th className="pb-3 pr-4">Company / Title</th>
                 <th className="pb-3 pr-4">Why</th>
-                <th className="pb-3">Strength</th>
+                <th className="pb-3 pr-4">Strength</th>
+                {settings?.show_tracker && <th className="pb-3"></th>}
               </tr>
             </thead>
             <tbody>
@@ -970,11 +1119,22 @@ function PrioritiesTab({ analytics, contacts, aiScreen }) {
                       <div className="text-xs text-live-text-secondary">{p.company}</div>
                     </td>
                     <td className="py-3 pr-4 text-sm">{stripMarkdown(p.why_prioritized || p.category || '')}</td>
-                    <td className="py-3">
+                    <td className="py-3 pr-4">
                       <span className={`badge ${p.relationship_strength === 'strong' ? 'badge-success' : p.relationship_strength === 'warm' ? 'badge-accent' : 'badge-info'}`}>
                         {p.relationship_strength || 'cold'}
                       </span>
                     </td>
+                    {settings?.show_tracker && (
+                      <td className="py-3">
+                        <button
+                          onClick={() => handleAddToTracker(p)}
+                          disabled={trackerAdded[p.name]}
+                          className="text-xs px-2 py-1 border border-live-border rounded hover:bg-live-bg-warm disabled:opacity-50 transition-colors"
+                        >
+                          {trackerAdded[p.name] ? 'Added' : '+ Track'}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               ) : (
@@ -991,11 +1151,22 @@ function PrioritiesTab({ analytics, contacts, aiScreen }) {
                       <div className="text-xs text-live-text-secondary">{c.company}</div>
                     </td>
                     <td className="py-3 pr-4 text-sm">{c.matchedCat || (c.isDormant ? 'Gone dormant' : 'Strategic')}</td>
-                    <td className="py-3">
+                    <td className="py-3 pr-4">
                       <span className={`badge ${c.relStrength === 'strong' ? 'badge-success' : c.relStrength === 'warm' ? 'badge-accent' : 'badge-info'}`}>
                         {c.relStrength}
                       </span>
                     </td>
+                    {settings?.show_tracker && (
+                      <td className="py-3">
+                        <button
+                          onClick={() => handleAddToTracker(c)}
+                          disabled={trackerAdded[c.name]}
+                          className="text-xs px-2 py-1 border border-live-border rounded hover:bg-live-bg-warm disabled:opacity-50 transition-colors"
+                        >
+                          {trackerAdded[c.name] ? 'Added' : '+ Track'}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

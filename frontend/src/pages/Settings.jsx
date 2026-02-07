@@ -38,6 +38,7 @@ export default function Settings({ user, settings, onSettingsChange }) {
   const [archivesLoading, setArchivesLoading] = useState(true)
   const [selectedArchive, setSelectedArchive] = useState(null)
   const [archiving, setArchiving] = useState(false)
+  const [showAllArchives, setShowAllArchives] = useState(false)
   const [quota, setQuota] = useState(null)
 
   const tier = settings?.tier || 'trial'
@@ -401,7 +402,7 @@ export default function Settings({ user, settings, onSettingsChange }) {
             </p>
           ) : (
             <div className="space-y-3">
-              {archives.map((archive) => {
+              {(showAllArchives ? archives : archives.slice(0, 3)).map((archive) => {
                 const date = new Date(archive.archived_at)
                 // Handle both parsed objects and double-encoded strings from older archives
                 let aiData = archive.ai_analysis
@@ -449,6 +450,14 @@ export default function Settings({ user, settings, onSettingsChange }) {
                   </button>
                 )
               })}
+              {archives.length > 3 && (
+                <button
+                  onClick={() => setShowAllArchives(!showAllArchives)}
+                  className="w-full text-center py-2 text-sm text-live-accent hover:underline"
+                >
+                  {showAllArchives ? 'Show less' : `Show ${archives.length - 3} more`}
+                </button>
+              )}
             </div>
           )}
         </div>

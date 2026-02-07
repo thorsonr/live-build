@@ -19,22 +19,58 @@ function rehydrateDates(data) {
   return { ...data, contacts, analytics }
 }
 
-const tabs = [
-  { id: 'summary', label: 'Summary' },
-  { id: 'network', label: 'Network' },
-  { id: 'relationships', label: 'Relationships' },
-  { id: 'skills', label: 'Skills & Expertise' },
-  { id: 'content', label: 'Your Content' },
-  { id: 'advocates', label: 'Your Advocates' },
-  { id: 'priorities', label: 'Priorities' },
-  { id: 'messages', label: 'Messages' },
-  { id: 'inferences', label: "LinkedIn's View" },
-  { id: 'contacts', label: 'All Contacts' },
+const sections = [
+  { id: 'summary', label: 'Summary', subTabs: [] },
+  {
+    id: 'analytics', label: 'Analytics',
+    subTabs: [
+      { id: 'network', label: 'Network' },
+      { id: 'relationships', label: 'Relationships' },
+      { id: 'skills', label: 'Skills & Expertise' },
+      { id: 'content', label: 'Your Content' },
+      { id: 'advocates', label: 'Your Advocates' },
+      { id: 'inferences', label: "LinkedIn's View" },
+      { id: 'contacts', label: 'Contacts' },
+    ]
+  },
+  {
+    id: 'engagement', label: 'Engagement',
+    subTabs: [
+      { id: 'priorities', label: 'Priorities' },
+      { id: 'messages', label: 'Messages' },
+      { id: 'tracker', label: 'Tracker' },
+    ]
+  },
 ]
 
 export default function SampleDashboard() {
-  const [activeTab, setActiveTab] = useState('summary')
+  const [activeSection, setActiveSection] = useState('summary')
+  const [activeSubTab, setActiveSubTab] = useState(null)
   const data = useMemo(() => rehydrateDates(sampleDataRaw), [])
+
+  const handleSectionClick = (sectionId) => {
+    setActiveSection(sectionId)
+    const section = sections.find(s => s.id === sectionId)
+    setActiveSubTab(section?.subTabs?.length ? section.subTabs[0].id : null)
+  }
+
+  const currentSection = sections.find(s => s.id === activeSection)
+  const activeTab = activeSection === 'summary' ? 'summary' : activeSubTab
+
+  const handleNavigate = (targetTab) => {
+    for (const section of sections) {
+      if (section.id === targetTab) {
+        handleSectionClick(section.id)
+        return
+      }
+      const sub = section.subTabs?.find(st => st.id === targetTab)
+      if (sub) {
+        setActiveSection(section.id)
+        setActiveSubTab(sub.id)
+        return
+      }
+    }
+  }
 
   return (
     <div>
@@ -57,23 +93,41 @@ export default function SampleDashboard() {
       {/* Tab Navigation */}
       <nav className="bg-live-surface border-b border-live-border sticky top-0 z-50 transition-colors">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex items-center justify-between py-3">
-            <div className="flex gap-1 overflow-x-auto flex-1">
-              {tabs.map((tab) => (
+          {/* Section tabs (row 1) */}
+          <div className="flex gap-1 overflow-x-auto py-3">
+            {sections.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => handleSectionClick(section.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${
+                  activeSection === section.id
+                    ? 'bg-live-accent text-[#1a1a2e]'
+                    : 'text-live-text-secondary hover:bg-live-bg-warm'
+                }`}
+              >
+                {section.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sub-tabs (row 2) */}
+          {currentSection?.subTabs?.length > 0 && (
+            <div className="flex gap-1 overflow-x-auto pb-3 -mt-1">
+              {currentSection.subTabs.map((sub) => (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-live-accent text-[#1a1a2e]'
-                      : 'text-live-text-secondary hover:bg-live-bg-warm'
+                  key={sub.id}
+                  onClick={() => setActiveSubTab(sub.id)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
+                    activeSubTab === sub.id
+                      ? 'bg-live-bg-warm text-live-text border border-live-border'
+                      : 'text-live-text-secondary hover:bg-live-bg-warm/50'
                   }`}
                 >
-                  {tab.label}
+                  {sub.label}
                 </button>
               ))}
             </div>
-          </div>
+          )}
         </div>
       </nav>
 
@@ -83,10 +137,11 @@ export default function SampleDashboard() {
           data={data}
           activeTab={activeTab}
           user={null}
-          settings={{ show_outreach: true }}
+          settings={{ show_outreach: true, show_tracker: true }}
           onExportCSV={null}
           sampleMode={true}
           sampleMessages={data.sampleMessages}
+          onNavigate={handleNavigate}
         />
       </main>
     </div>

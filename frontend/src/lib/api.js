@@ -57,6 +57,10 @@ export const api = {
   deleteAllData: () => request('/api/data/all', { method: 'DELETE' }),
   archiveAndReset: () => request('/api/data/archive', { method: 'POST' }),
   getArchives: () => request('/api/data/archives'),
+  getTracker: () => request('/api/data/tracker'),
+  addToTracker: (entry) => request('/api/data/tracker', { method: 'POST', body: JSON.stringify(entry) }),
+  updateTracker: (id, updates) => request(`/api/data/tracker/${id}`, { method: 'PATCH', body: JSON.stringify(updates) }),
+  removeFromTracker: (id) => request(`/api/data/tracker/${id}`, { method: 'DELETE' }),
 
   // AI
   analyzeNetwork: (data) => request('/api/ai/analyze', {

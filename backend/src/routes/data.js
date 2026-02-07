@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { createUserClient, supabaseAdmin } from '../lib/supabase.js'
 import { requireAuth } from '../middleware/auth.js'
+import { getUserTier } from '../services/usage.js'
 
 const router = Router()
 
@@ -227,7 +228,134 @@ router.delete('/all', requireAuth, async (req, res, next) => {
     await supabaseAdmin.from('network_analysis').delete().eq('user_id', userId)
     await supabaseAdmin.from('usage_quotas').delete().eq('user_id', userId)
     await supabaseAdmin.from('custom_categories').delete().eq('user_id', userId)
+    await supabaseAdmin.from('engagement_tracker').delete().eq('user_id', userId)
     await supabaseAdmin.from('analysis_archives').delete().eq('user_id', userId)
+
+    res.json({ success: true })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// =============================================
+// ENGAGEMENT TRACKER ENDPOINTS
+// =============================================
+
+// Middleware to check tracker access (Max/BYOK only)
+async function requireTracker(req, res, next) {
+  try {
+    const tier = await getUserTier(req.user.id)
+    if (!tier.show_tracker) {
+      return res.status(403).json({ error: 'Upgrade to Max to use the Engagement Tracker.' })
+    }
+    next()
+  } catch (err) {
+    next(err)
+  }
+}
+
+// GET /api/data/tracker — list user's tracker entries
+router.get('/tracker', requireAuth, requireTracker, async (req, res, next) => {
+  try {
+    const { data: entries, error } = await supabaseAdmin
+      .from('engagement_tracker')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('last_action_at', { ascending: false })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({ entries: entries || [] })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// POST /api/data/tracker — create tracker entry
+router.post('/tracker', requireAuth, requireTracker, async (req, res, next) => {
+  try {
+    const { contact_name, contact_company, contact_position, status, notes } = req.body
+
+    if (!contact_name) {
+      return res.status(400).json({ error: 'contact_name is required' })
+    }
+
+    const validStatuses = ['identified', 'contacted', 'replied', 'meeting', 'closed', 'parked']
+    const entryStatus = validStatuses.includes(status) ? status : 'identified'
+
+    const { data: entry, error } = await supabaseAdmin
+      .from('engagement_tracker')
+      .insert({
+        user_id: req.user.id,
+        contact_name,
+        contact_company: contact_company || null,
+        contact_position: contact_position || null,
+        status: entryStatus,
+        notes: notes || null,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({ entry })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// PATCH /api/data/tracker/:id — update tracker entry
+router.patch('/tracker/:id', requireAuth, requireTracker, async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { status, notes, contact_name, contact_company, contact_position } = req.body
+    const updates = { last_action_at: new Date().toISOString() }
+
+    const validStatuses = ['identified', 'contacted', 'replied', 'meeting', 'closed', 'parked']
+    if (status && validStatuses.includes(status)) {
+      updates.status = status
+    }
+    if (notes !== undefined) updates.notes = notes
+    if (contact_name) updates.contact_name = contact_name
+    if (contact_company !== undefined) updates.contact_company = contact_company
+    if (contact_position !== undefined) updates.contact_position = contact_position
+
+    const { data: entry, error } = await supabaseAdmin
+      .from('engagement_tracker')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', req.user.id)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({ entry })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// DELETE /api/data/tracker/:id — remove tracker entry
+router.delete('/tracker/:id', requireAuth, requireTracker, async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    const { error } = await supabaseAdmin
+      .from('engagement_tracker')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', req.user.id)
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
 
     res.json({ success: true })
   } catch (err) {

@@ -7,6 +7,8 @@ export default function MessageGenerator({ data, settings, sampleMode = false, s
   const [searchQuery, setSearchQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [userContext, setUserContext] = useState('')
+  const [tone, setTone] = useState('professional')
+  const [length, setLength] = useState('medium')
   const [messages, setMessages] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState('')
@@ -217,7 +219,7 @@ export default function MessageGenerator({ data, settings, sampleMode = false, s
     setMessages(null)
 
     try {
-      const result = await api.generateOutreachMessages({ contact: selectedContact, userContext })
+      const result = await api.generateOutreachMessages({ contact: selectedContact, userContext, tone, length })
       setMessages(result.messages)
     } catch (err) {
       setError(err.message || 'Failed to generate messages. Please try again.')
@@ -382,6 +384,35 @@ export default function MessageGenerator({ data, settings, sampleMode = false, s
                 onChange={(e) => setUserContext(e.target.value)}
                 placeholder="e.g. I'm exploring partnerships in the fintech space and want to reconnect about potential collaboration..."
               />
+            </div>
+
+            {/* Tone & Length Selectors */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">Tone</label>
+                <select
+                  className="input w-full"
+                  value={tone}
+                  onChange={(e) => setTone(e.target.value)}
+                >
+                  <option value="professional">Professional</option>
+                  <option value="casual">Casual</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="direct">Direct</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Length</label>
+                <select
+                  className="input w-full"
+                  value={length}
+                  onChange={(e) => setLength(e.target.value)}
+                >
+                  <option value="short">Short (~50 words)</option>
+                  <option value="medium">Medium (~100 words)</option>
+                  <option value="long">Long (~200 words)</option>
+                </select>
+              </div>
             </div>
 
             {error && (
