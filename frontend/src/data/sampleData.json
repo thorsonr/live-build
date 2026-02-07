@@ -35311,5 +35311,119 @@
         "body": "River — realized it's been since January since we last connected, which is far too long given how quickly things move in our world. Hope Vertex is treating you well and that you're not buried under the usual Q1 chaos.\n\nI've been thinking about our previous conversations, especially around where hitech leadership is heading. Some patterns I'm seeing lately reminded me of insights you'd shared, and honestly, I'd love to get your take on a few partnership concepts that have been percolating. Your recommendation meant a lot, and I've been intentional about where I focus — which is why I wanted to reconnect with you specifically.\n\nAny chance you're up for a casual coffee chat (virtual or in-person) in the coming weeks? Would love to hear what's keeping you busy and share what I'm working on. And if nothing else, just good to catch up with someone who actually gets this space."
       }
     }
-  }
+  },
+  "sampleTrackerEntries": [
+    {
+      "id": "sample-tracker-1",
+      "contact_name": "River Zhang",
+      "contact_company": "Vertex Labs",
+      "contact_position": "Global Managing Director - NA Hitech Industry",
+      "contact_email": "r.zhang@vertexlabs.com",
+      "contact_phone": "(415) 555-0142",
+      "status": "meeting",
+      "notes": "Had a great intro call. Interested in AI strategy consulting for their NA division. Follow up with proposal deck and case studies from similar engagements.",
+      "last_action_at": "2026-02-04T14:30:00Z",
+      "engagement_log": [
+        {
+          "date": "2026-01-15",
+          "type": "LinkedIn"
+        },
+        {
+          "date": "2026-01-22",
+          "type": "Email"
+        },
+        {
+          "date": "2026-01-29",
+          "type": "Call"
+        },
+        {
+          "date": "2026-02-04",
+          "type": "In-Person"
+        }
+      ]
+    },
+    {
+      "id": "sample-tracker-2",
+      "contact_name": "Greg Logan",
+      "contact_company": "Forge Analytics",
+      "contact_position": "President",
+      "contact_email": "greg.logan@forgeanalytics.com",
+      "contact_phone": "",
+      "status": "replied",
+      "notes": "Responded positively to reactivation message. Wants to catch up over coffee next month.",
+      "last_action_at": "2026-02-01T10:00:00Z",
+      "engagement_log": [
+        {
+          "date": "2026-01-20",
+          "type": "LinkedIn"
+        },
+        {
+          "date": "2026-02-01",
+          "type": "Email"
+        }
+      ]
+    },
+    {
+      "id": "sample-tracker-3",
+      "contact_name": "Daniel Moore",
+      "contact_company": "Southgate Partners",
+      "contact_position": "Chief Operations Officer",
+      "contact_email": "",
+      "contact_phone": "(212) 555-0387",
+      "status": "contacted",
+      "notes": "",
+      "last_action_at": "2026-01-28T09:00:00Z",
+      "engagement_log": [
+        {
+          "date": "2026-01-28",
+          "type": "LinkedIn"
+        }
+      ]
+    },
+    {
+      "id": "sample-tracker-4",
+      "contact_name": "Cole Rice",
+      "contact_company": "Propel Solutions",
+      "contact_position": "Venture Principal",
+      "contact_email": "cole.rice@propelsolutions.com",
+      "contact_phone": "",
+      "status": "identified",
+      "notes": "Strong VC contact — could be valuable for fundraising conversations. Research their recent portfolio investments before reaching out.",
+      "last_action_at": "2026-01-25T16:00:00Z",
+      "engagement_log": []
+    },
+    {
+      "id": "sample-tracker-5",
+      "contact_name": "Felix Young",
+      "contact_company": "Navigate Digital",
+      "contact_position": "Director, Product Management, Loyalty",
+      "contact_email": "f.young@navigatedigital.com",
+      "contact_phone": "(650) 555-0219",
+      "status": "closed",
+      "notes": "Completed intro. Connected him with our data science team. He referred us to their VP of Engineering for a potential pilot project.",
+      "last_action_at": "2026-02-06T11:00:00Z",
+      "engagement_log": [
+        {
+          "date": "2026-01-10",
+          "type": "LinkedIn"
+        },
+        {
+          "date": "2026-01-17",
+          "type": "Email"
+        },
+        {
+          "date": "2026-01-24",
+          "type": "Call"
+        },
+        {
+          "date": "2026-02-03",
+          "type": "In-Person"
+        },
+        {
+          "date": "2026-02-06",
+          "type": "Email"
+        }
+      ]
+    }
+  ]
 }

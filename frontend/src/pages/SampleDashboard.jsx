@@ -141,6 +141,7 @@ export default function SampleDashboard() {
           onExportCSV={null}
           sampleMode={true}
           sampleMessages={data.sampleMessages}
+          sampleTrackerEntries={data.sampleTrackerEntries}
           onNavigate={handleNavigate}
         />
       </main>

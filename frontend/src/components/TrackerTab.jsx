@@ -252,7 +252,7 @@ function TrackerDetailModal({ entry, onClose, onUpdate }) {
   )
 }
 
-export default function TrackerTab({ sampleMode = false, contacts = [] }) {
+export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = [], contacts = [] }) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
@@ -303,7 +303,10 @@ export default function TrackerTab({ sampleMode = false, contacts = [] }) {
 
   useEffect(() => {
     if (!sampleMode) loadEntries()
-    else setLoading(false)
+    else {
+      setEntries(sampleTrackerEntries || [])
+      setLoading(false)
+    }
   }, [sampleMode])
 
   const loadEntries = async () => {

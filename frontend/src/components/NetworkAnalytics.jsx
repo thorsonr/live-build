@@ -75,7 +75,7 @@ function SampleCTAModal({ onClose }) {
   )
 }
 
-export default function NetworkAnalytics({ data, activeTab, user, settings, profile, onExportCSV, sampleMode = false, sampleMessages = null, onNavigate }) {
+export default function NetworkAnalytics({ data, activeTab, user, settings, profile, onExportCSV, sampleMode = false, sampleMessages = null, sampleTrackerEntries = null, onNavigate }) {
   const { contacts, analytics, aiAnalysis } = data
   const [selectedContact, setSelectedContact] = useState(null)
   const [preselectedContact, setPreselectedContact] = useState(null)
@@ -137,7 +137,7 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, prof
       )}
       {activeTab === 'tracker' && (
         settings?.show_tracker ? (
-          <TrackerTab sampleMode={sampleMode} contacts={contacts} />
+          <TrackerTab sampleMode={sampleMode} sampleTrackerEntries={sampleTrackerEntries} contacts={contacts} />
         ) : (
           <div>
             <div className="section-label">Engagement Tracker</div>
