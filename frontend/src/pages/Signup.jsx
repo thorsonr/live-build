@@ -91,7 +91,7 @@ export default function Signup() {
             Create Your Account
           </h1>
           <p className="text-center text-sm text-live-text-secondary mb-6">
-            5-day free trial with 1 AI analysis and 2 AI chat questions
+            5-day free trial with 1 AI analysis
           </p>
 
           {error && (
@@ -112,7 +112,7 @@ export default function Signup() {
                 required
               />
               <p className="mt-1 text-xs text-live-text-secondary">
-                Don't have a code? <a href="mailto:hello@live-pro.com" className="text-live-info hover:underline">Request access</a>
+                Don't have a code? <a href="mailto:hello@robertthorson.com?subject=LiVE%20Pro%20Invite%20Request" className="text-live-info hover:underline">Request access</a>
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">

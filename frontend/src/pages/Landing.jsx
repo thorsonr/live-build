@@ -16,9 +16,14 @@ export default function Landing() {
             to="/signup"
             className="btn btn-primary text-base px-8 py-3"
           >
-            Start Free Trial
+            Start Trial
           </Link>
-          <span className="text-sm text-live-text-secondary">Invite code required</span>
+          <a
+            href="mailto:hello@robertthorson.com?subject=LiVE%20Pro%20beta%20invite%20request"
+            className="text-sm text-live-info hover:underline"
+          >
+            Request Invite Code
+          </a>
         </div>
         <div className="mt-4">
           <Link to="/sample" className="text-sm text-live-info hover:underline">
@@ -27,50 +32,8 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Trust & Privacy Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
-        <div className="text-center p-4">
-          <div className="flex justify-center mb-2">
-            <svg className="w-7 h-7 text-live-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <h4 className="text-sm font-semibold mb-1">Your Data Stays Yours</h4>
-          <p className="text-xs text-live-text-secondary">Delete everything at any time. We store only what you upload — nothing is shared or sold.</p>
-        </div>
-        <div className="text-center p-4">
-          <div className="flex justify-center mb-2">
-            <svg className="w-7 h-7 text-live-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-              <path d="M8 21h8" /><path d="M12 17v4" />
-            </svg>
-          </div>
-          <h4 className="text-sm font-semibold mb-1">Processed In Your Browser</h4>
-          <p className="text-xs text-live-text-secondary">Your ZIP is parsed and analyzed locally. Only a summary is sent to AI — never raw files.</p>
-        </div>
-        <div className="text-center p-4">
-          <div className="flex justify-center mb-2">
-            <svg className="w-7 h-7 text-live-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-          </div>
-          <h4 className="text-sm font-semibold mb-1">No LinkedIn Access</h4>
-          <p className="text-xs text-live-text-secondary">We never connect to your LinkedIn account. No posting, no API access, no automated actions.</p>
-        </div>
-        <div className="text-center p-4">
-          <div className="flex justify-center mb-2">
-            <svg className="w-7 h-7 text-live-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-          </div>
-          <h4 className="text-sm font-semibold mb-1">Full Deletion Control</h4>
-          <p className="text-xs text-live-text-secondary">One click removes all your data permanently — connections, analyses, and history.</p>
-        </div>
-      </div>
-
       {/* AI Features Highlight */}
-      <div className="card mb-12 border-live-accent">
+      <div className="card mb-12 border-live-accent border-2">
         <div className="card-body p-8">
           <div className="flex items-start gap-6">
             <svg className="w-10 h-10 flex-shrink-0 text-live-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -106,7 +69,7 @@ export default function Landing() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 mb-16">
+      <div className="grid md:grid-cols-3 gap-6 mb-12">
         <div className="card">
           <div className="card-body text-center">
             <div className="mb-4 flex justify-center">
@@ -151,8 +114,86 @@ export default function Landing() {
         </div>
       </div>
 
+      {/* Trust & Privacy Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        <div className="text-center p-4">
+          <div className="flex justify-center mb-2">
+            <svg className="w-7 h-7 text-live-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <h4 className="text-sm font-semibold mb-1">Your Data Stays Yours</h4>
+          <p className="text-xs text-live-text-secondary">Delete everything at any time. We store only what you upload — nothing is shared or sold.</p>
+        </div>
+        <div className="text-center p-4">
+          <div className="flex justify-center mb-2">
+            <svg className="w-7 h-7 text-live-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <path d="M8 21h8" /><path d="M12 17v4" />
+            </svg>
+          </div>
+          <h4 className="text-sm font-semibold mb-1">Processed In Your Browser</h4>
+          <p className="text-xs text-live-text-secondary">Your ZIP is parsed and analyzed locally. Only a summary is sent to AI — never raw files.</p>
+        </div>
+        <div className="text-center p-4">
+          <div className="flex justify-center mb-2">
+            <svg className="w-7 h-7 text-live-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <h4 className="text-sm font-semibold mb-1">No LinkedIn Access</h4>
+          <p className="text-xs text-live-text-secondary">We never connect to your LinkedIn account. No posting, no API access, no automated actions.</p>
+        </div>
+        <div className="text-center p-4">
+          <div className="flex justify-center mb-2">
+            <svg className="w-7 h-7 text-live-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+          </div>
+          <h4 className="text-sm font-semibold mb-1">Full Deletion Control</h4>
+          <p className="text-xs text-live-text-secondary">One click removes all your data permanently — connections, analyses, and history.</p>
+        </div>
+      </div>
+
+      {/* How It Works */}
+      <div className="card mb-12">
+        <div className="card-body p-8">
+          <h2 className="font-display text-2xl font-semibold mb-4">How It Works</h2>
+          <ol className="space-y-4">
+            <li className="flex gap-4">
+              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-live-accent text-live-primary flex items-center justify-center font-semibold">1</span>
+              <div>
+                <strong>Export your LinkedIn data</strong>
+                <p className="text-sm text-live-text-secondary">
+                  Request your data archive from LinkedIn Settings &rarr; Get a copy of your data
+                </p>
+              </div>
+            </li>
+            <li className="flex gap-4">
+              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-live-accent text-live-primary flex items-center justify-center font-semibold">2</span>
+              <div>
+                <strong>Upload the ZIP file</strong>
+                <p className="text-sm text-live-text-secondary">
+                  Drop your LinkedIn data export into LiVE Pro. Files are parsed in your browser — only a structured summary reaches our servers.
+                </p>
+              </div>
+            </li>
+            <li className="flex gap-4">
+              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-live-accent text-live-primary flex items-center justify-center font-semibold">3</span>
+              <div>
+                <strong>Explore insights and take action</strong>
+                <p className="text-sm text-live-text-secondary">
+                  View analytics, identify opportunities, generate AI-powered outreach, and track your engagement pipeline.
+                </p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
       {/* What Your LinkedIn Export Contains */}
-      <div className="card mb-16">
+      <div className="card mb-12">
         <div className="card-body p-8">
           <h2 className="font-display text-2xl font-semibold mb-2">What Your LinkedIn Export Contains</h2>
           <p className="text-sm text-live-text-secondary mb-6">
@@ -192,16 +233,15 @@ export default function Landing() {
       </div>
 
       {/* Pricing Section */}
-      <div className="mb-16">
-        <h2 className="font-display text-2xl font-semibold text-center mb-8">Simple Pricing</h2>
-        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          <div className="card border-2 border-live-accent">
+      <div className="mb-12">
+        <h2 className="font-display text-2xl font-semibold text-center mb-2">Enhanced Analytics</h2>
+        <p className="text-sm text-live-text-secondary text-center mb-8">
+          <a href="mailto:hello@robertthorson.com?subject=LiVE%20Pro%20beta%20invite%20request" className="text-live-info hover:underline">Inquire about full access</a>
+        </p>
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="card">
             <div className="card-body p-6">
-              <h3 className="text-xl font-semibold mb-1">LiVE Pro</h3>
-              <div className="mb-4">
-                <span className="text-3xl font-light">$5</span>
-                <span className="text-live-text-secondary">/month</span>
-              </div>
+              <h3 className="text-xl font-semibold mb-4">LiVE Pro</h3>
               <ul className="space-y-2 text-sm mb-6">
                 <li className="flex items-center gap-2">
                   <span className="text-live-success">&#10003;</span> Full network analytics
@@ -219,28 +259,35 @@ export default function Landing() {
                   <span className="text-live-success">&#10003;</span> Cloud sync across devices
                 </li>
               </ul>
-              <Link to="/signup" className="btn btn-primary w-full text-center block">
-                Start Free Trial
-              </Link>
-              <p className="text-xs text-live-text-secondary text-center mt-3">
-                Unlimited usage available at higher tiers
-              </p>
+            </div>
+          </div>
+
+          <div className="card border-2 border-live-accent">
+            <div className="card-body p-6">
+              <h3 className="text-xl font-semibold mb-4">LiVE Max</h3>
+              <ul className="space-y-2 text-sm mb-6">
+                <li className="flex items-center gap-2">
+                  <span className="text-live-success">&#10003;</span> Everything in Pro
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-live-success">&#10003;</span> Engagement planning and tracking
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-live-success">&#10003;</span> Unlimited message drafting
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-live-success">&#10003;</span> Unlimited AI insights chat
+                </li>
+              </ul>
             </div>
           </div>
 
           <div className="card">
             <div className="card-body p-6">
-              <h3 className="text-xl font-semibold mb-1">Bring Your Own Key</h3>
-              <div className="mb-4">
-                <span className="text-3xl font-light">$5</span>
-                <span className="text-live-text-secondary">/month</span>
-              </div>
+              <h3 className="text-xl font-semibold mb-4">Bring Your Own Key</h3>
               <ul className="space-y-2 text-sm mb-6">
                 <li className="flex items-center gap-2">
-                  <span className="text-live-success">&#10003;</span> Full network analytics
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-live-success">&#10003;</span> Unlimited AI features*
+                  <span className="text-live-success">&#10003;</span> Everything in Max
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-live-success">&#10003;</span> Use your own Claude API key
@@ -253,58 +300,17 @@ export default function Landing() {
                   <span className="text-live-text-secondary">You pay AI costs directly</span>
                 </li>
               </ul>
-              <Link to="/signup" className="btn btn-secondary w-full text-center block">
-                Start Free Trial
-              </Link>
-              <p className="text-xs text-live-text-secondary text-center mt-3">
-                *Limited to personal use. AI usage billed by Anthropic.
-              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="card mb-16">
-        <div className="card-body p-8">
-          <h2 className="font-display text-2xl font-semibold mb-4">How It Works</h2>
-          <ol className="space-y-4">
-            <li className="flex gap-4">
-              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-live-accent text-live-primary flex items-center justify-center font-semibold">1</span>
-              <div>
-                <strong>Export your LinkedIn data</strong>
-                <p className="text-sm text-live-text-secondary">
-                  Request your data archive from LinkedIn Settings &rarr; Get a copy of your data
-                </p>
-              </div>
-            </li>
-            <li className="flex gap-4">
-              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-live-accent text-live-primary flex items-center justify-center font-semibold">2</span>
-              <div>
-                <strong>Upload the ZIP file</strong>
-                <p className="text-sm text-live-text-secondary">
-                  Drop your LinkedIn data export into LiVE Pro. Files are parsed in your browser — only a structured summary reaches our servers.
-                </p>
-              </div>
-            </li>
-            <li className="flex gap-4">
-              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-live-accent text-live-primary flex items-center justify-center font-semibold">3</span>
-              <div>
-                <strong>Explore insights and take action</strong>
-                <p className="text-sm text-live-text-secondary">
-                  View analytics, identify opportunities, generate AI-powered outreach, and track your engagement pipeline.
-                </p>
-              </div>
-            </li>
-          </ol>
-        </div>
-      </div>
-
-      <div className="text-center">
+      <div className="text-center mt-16">
         <p className="text-sm text-live-text-secondary mb-4">
           Questions? <a href="mailto:hello@robertthorson.com" className="text-live-info hover:underline">Contact us</a>
         </p>
         <p className="text-xs text-live-text-secondary">
-          Need an invite code? <a href="mailto:hello@robertthorson.com" className="text-live-info hover:underline">Request early access</a>
+          Need an invite code? <a href="mailto:hello@robertthorson.com?subject=LiVE%20Pro%20beta%20invite%20request" className="text-live-info hover:underline">Request early access</a>
         </p>
       </div>
     </main>
