@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiVE - LinkedIn Visual Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg: #FAF9F7;
+            --bg-warm: #F5F3EE;
+            --surface: #FFFFFF;
+            --border: #E8E4DD;
+            --text: #1a1a2e;
+            --text-secondary: #636e72;
+            --accent: #c9a227;
+            --accent-soft: rgba(201, 162, 39, 0.1);
+            --primary: #1a1a2e;
+            --success: #2d8a6e;
+            --warning: #c9a227;
+            --danger: #c94a4a;
+            --info: #667eea;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; font-size: 15px; }
+
+        .header { background: var(--primary); color: white; padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; flex-direction: column; align-items: flex-start; }
+        .logo h1 { font-size: 24px; font-weight: 700; line-height: 1; }
+        .logo h1 span { font-size: inherit; opacity: 1; }
+        .logo > span { font-size: 11px; opacity: 0.6; margin-top: 2px; letter-spacing: 0.5px; }
+        .header-badges { display: flex; gap: 10px; align-items: center; }
+        .privacy-badge { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--success); background: rgba(45, 138, 110, 0.15); padding: 8px 14px; border-radius: 20px; }
+        .storage-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--info); background: rgba(102,126,234,0.15); padding: 6px 12px; border-radius: 16px; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+        .storage-badge:hover { background: rgba(102,126,234,0.25); }
+        .storage-badge.hidden { display: none; }
+
+        /* Collapsible skills */
+        .skills-collapsed { max-height: 200px; overflow: hidden; position: relative; }
+        .skills-collapsed::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(transparent, var(--surface)); pointer-events: none; }
+        .skills-expanded { max-height: none; }
+        .skills-expanded::after { display: none; }
+        .show-more-btn { display: block; margin-top: 12px; padding: 8px 16px; background: var(--bg-warm); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--text-secondary); text-align: center; }
+        .show-more-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+        .nav { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; gap: 6px; padding: 12px 32px; overflow-x: auto; }
+        .nav-btn { padding: 10px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s; color: var(--text-secondary); }
+        .nav-btn:hover { background: var(--bg-warm); }
+        .nav-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .main { max-width: 1200px; margin: 0 auto; padding: 32px; }
+
+        /* Upload */
+        .upload-section { display: none; }
+        .upload-section.active { display: block; }
+        .welcome-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px; max-width: 900px; margin: 30px auto; }
+        .welcome-card h2 { font-family: 'Playfair Display', serif; font-size: 1.75rem; text-align: center; margin-bottom: 8px; }
+        .welcome-card > p { text-align: center; color: var(--text-secondary); margin-bottom: 24px; }
+
+        /* Saved data banner */
+        .saved-data-banner { background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(45,138,110,0.1)); border: 1px solid var(--info); border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center; }
+        .saved-data-banner h3 { font-size: 16px; color: var(--primary); margin-bottom: 8px; }
+        .saved-data-banner p { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+        .saved-data-banner .btn-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .saved-data-banner .btn { padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; }
+        .saved-data-banner .btn-primary { background: var(--info); color: white; }
+        .saved-data-banner .btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+        .saved-data-banner .btn-danger { background: rgba(201,74,74,0.1); border: 1px solid var(--danger); color: var(--danger); }
+        .saved-data-banner .btn:hover { opacity: 0.9; }
+
+        .drop-zone { border: 3px dashed var(--border); border-radius: 16px; padding: 48px 32px; text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 20px; }
+        .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: var(--accent-soft); }
+        .drop-zone.processing { border-color: var(--info); background: rgba(102,126,234,0.08); }
+        .drop-zone.success { border-color: var(--success); background: rgba(45,138,110,0.08); }
+        .drop-zone .icon { font-size: 48px; margin-bottom: 12px; }
+        .drop-zone h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+        .drop-zone p { font-size: 13px; color: var(--text-secondary); }
+        .drop-zone input { display: none; }
+        .file-status { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 20px; }
+        .file-item { padding: 10px; background: var(--bg-warm); border-radius: 8px; font-size: 11px; text-align: center; }
+        .file-item.found { background: rgba(45,138,110,0.1); color: var(--success); }
+        .file-item.missing { background: var(--bg-warm); color: var(--text-secondary); }
+        .file-item .name { font-weight: 600; margin-bottom: 2px; }
+        .file-item .count { opacity: 0.7; }
+
+        .manual-toggle { margin-top: 20px; text-align: center; }
+        .manual-toggle button { background: none; border: none; color: var(--info); font-size: 13px; cursor: pointer; text-decoration: underline; }
+        .manual-upload { display: none; margin-top: 16px; padding: 20px; background: var(--bg-warm); border-radius: 12px; }
+        .manual-upload.active { display: block; }
+        .manual-upload h4 { font-size: 14px; margin-bottom: 12px; }
+        .upload-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .upload-box { border: 2px dashed var(--border); border-radius: 8px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .upload-box:hover { border-color: var(--accent); background: var(--accent-soft); }
+        .upload-box.uploaded { border-color: var(--success); background: rgba(45,138,110,0.08); border-style: solid; }
+        .upload-box .label { font-size: 11px; font-weight: 600; }
+        .upload-box .status { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+        .upload-box .status.success { color: var(--success); }
+        .upload-box input { display: none; }
+
+        /* Category customization */
+        .category-setup { display: none; margin-top: 20px; padding: 20px; background: var(--bg-warm); border-radius: 12px; }
+        .category-setup.active { display: block; }
+        .category-setup h4 { font-size: 14px; margin-bottom: 6px; }
+        .category-setup > p { font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; }
+        .category-list { display: flex; flex-direction: column; gap: 10px; }
+        .category-row { display: flex; gap: 10px; align-items: center; }
+        .category-row input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+        .category-row .cat-name { width: 140px; }
+        .category-row .cat-keywords { flex: 1; }
+        .category-row .remove-cat { padding: 8px 12px; background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; color: var(--danger); font-size: 16px; }
+        .category-row .remove-cat:hover { background: rgba(201,74,74,0.1); }
+        .add-category { margin-top: 12px; padding: 8px 16px; background: var(--surface); border: 1px dashed var(--border); border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text-secondary); }
+        .add-category:hover { border-color: var(--accent); color: var(--accent); }
+
+        .analyze-btn { width: 100%; padding: 16px; background: var(--accent); color: var(--primary); border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+        .analyze-btn:disabled { background: #ccc; cursor: not-allowed; color: #888; }
+        .privacy-note { margin-top: 20px; padding: 14px; background: rgba(45,138,110,0.1); border-radius: 10px; font-size: 12px; color: var(--success); }
+
+        /* Dashboard */
+        .dashboard { display: none; }
+        .dashboard.active { display: block; }
+        .view-panel { display: none; }
+        .view-panel.active { display: block; }
+
+        /* Section styles */
+        .section-header { margin-bottom: 24px; }
+        .section-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+        .section-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; color: var(--primary); margin-bottom: 8px; }
+        .section-intro { color: var(--text-secondary); font-size: 14px; max-width: 700px; }
+
+        /* Hero stats */
+        .hero-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
+        .hero-stat { background: var(--primary); color: white; padding: 20px; border-radius: 12px; text-align: center; }
+        .hero-stat .value { font-size: 2rem; font-weight: 300; color: var(--accent); line-height: 1; }
+        .hero-stat .label { font-size: 11px; opacity: 0.7; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Cards */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px; }
+        .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 14px; }
+        .card-body { padding: 20px; }
+
+        /* Stats grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+        .stat-card.accent { border-left: 3px solid var(--accent); }
+        .stat-card.danger { border-left: 3px solid var(--danger); }
+        .stat-card.success { border-left: 3px solid var(--success); }
+        .stat-card .value { font-size: 1.75rem; font-weight: 300; color: var(--primary); line-height: 1; }
+        .stat-card .label { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+        .stat-card .note { font-size: 11px; color: var(--text-secondary); margin-top: 2px; opacity: 0.7; }
+
+        /* Big stats */
+        .big-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .big-stat { text-align: center; padding: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+        .big-stat .value { font-size: 2.5rem; font-weight: 300; line-height: 1; }
+        .big-stat .value.accent { color: var(--accent); }
+        .big-stat .value.danger { color: var(--danger); }
+        .big-stat .label { font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+
+        /* Depth bar */
+        .depth-bar { display: flex; height: 44px; border-radius: 8px; overflow: hidden; margin: 16px 0; }
+        .depth-segment { display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 500; min-width: 24px; }
+
+        /* Callout */
+        .callout { background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 16px 20px; margin: 20px 0; border-radius: 0 10px 10px 0; }
+        .callout p { margin: 0; font-size: 14px; }
+        .callout strong { color: var(--primary); }
+
+        /* Editorial */
+        .editorial { background: var(--primary); color: white; padding: 24px; border-radius: 12px; margin: 20px 0; }
+        .editorial-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+        .editorial p { font-size: 14px; line-height: 1.7; opacity: 0.9; margin: 0; }
+
+        /* Grids */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+        /* Charts */
+        .chart-container { height: 260px; position: relative; }
+
+        /* Tables */
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); background: var(--bg-warm); border-bottom: 1px solid var(--border); }
+        .data-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .data-table tr:hover td { background: var(--bg-warm); }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+        .badge-accent { background: var(--accent-soft); color: #8a6d1b; }
+        .badge-success { background: rgba(45,138,110,0.1); color: var(--success); }
+        .badge-danger { background: rgba(201,74,74,0.1); color: var(--danger); }
+        .badge-info { background: rgba(102,126,234,0.1); color: var(--info); }
+        .badge-neutral { background: #f1f0ee; color: var(--text-secondary); }
+
+        /* Progress */
+        .progress-item { margin-bottom: 14px; }
+        .progress-item .label-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; }
+        .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 4px; }
+
+        /* Skills grid */
+        .skills-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .skill-tag { padding: 6px 12px; background: var(--bg-warm); border: 1px solid var(--border); border-radius: 16px; font-size: 12px; }
+        .skill-tag.highlight { background: var(--accent-soft); border-color: var(--accent); }
+
+        /* Insight cards */
+        .insight-card { padding: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; }
+        .insight-card h4 { font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 6px; }
+        .insight-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+        .insight-card .contact-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .contact-chip { padding: 4px 10px; background: var(--bg-warm); border: 1px solid var(--border); border-radius: 14px; font-size: 11px; cursor: pointer; text-decoration: none; color: var(--text); }
+        .contact-chip:hover { background: var(--accent-soft); border-color: var(--accent); }
+        a.contact-chip:hover { color: var(--primary); }
+
+        /* Playbook */
+        .playbook-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+        .playbook-card .name { font-weight: 600; color: var(--primary); margin-bottom: 2px; }
+        .playbook-card .role { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+        .playbook-card .message { font-size: 12px; background: var(--bg-warm); padding: 14px; border-radius: 8px; line-height: 1.6; font-style: italic; }
+
+        /* Recommendation card */
+        .rec-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 14px; }
+        .rec-card .header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .rec-card .name { font-weight: 600; }
+        .rec-card .title { font-size: 12px; color: var(--text-secondary); }
+        .rec-card .text { font-size: 13px; line-height: 1.6; color: var(--text); font-style: italic; }
+
+        /* Contacts */
+        .contact-filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .search-input { flex: 1; min-width: 200px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+        .filter-select { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: white; }
+        .contact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; max-height: 600px; overflow-y: auto; }
+        .contact-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface); position: relative; }
+        .contact-card:hover { border-color: var(--accent); }
+        .contact-card .name { font-weight: 600; font-size: 14px; display: block; color: inherit; text-decoration: none; }
+        a.name:hover { color: var(--info); text-decoration: underline; }
+        .contact-card .linkedin-link { position: absolute; top: 12px; right: 12px; color: var(--text-secondary); opacity: 0.4; font-size: 12px; text-decoration: none; }
+        .contact-card .linkedin-link:hover { opacity: 1; color: #0a66c2; }
+        .contact-card .position { font-size: 12px; color: var(--text-secondary); }
+        .contact-card .company { font-size: 12px; color: var(--accent); font-weight: 500; }
+        .contact-card .tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+        .contact-card .tag { padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 500; }
+        .tag-recruiter { background: #fee2e2; color: #991b1b; }
+        .tag-executive { background: #dbeafe; color: #1e40af; }
+        .tag-pe { background: #d1fae5; color: #065f46; }
+        .tag-dormant { background: #fef3c7; color: #92400e; }
+        .tag-endorsed { background: #e0e7ff; color: #4338ca; }
+        .contact-card .meta { display: flex; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-secondary); }
+        .action-btn { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; background: var(--surface); cursor: pointer; text-decoration: none; color: var(--text); }
+        .action-btn:hover { background: var(--bg-warm); }
+        .action-btn.primary { background: var(--accent); color: var(--primary); border-color: var(--accent); }
+        .action-btn.danger { background: rgba(201,74,74,0.1); color: var(--danger); border-color: var(--danger); }
+        .reset-btn { padding: 10px 14px; background: transparent; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; cursor: pointer; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .hero-stats, .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .big-stats, .grid-3 { grid-template-columns: 1fr; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .upload-grid, .file-status { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .main { padding: 16px; }
+            .hero-stats { grid-template-columns: 1fr; }
+            .upload-grid, .file-status { grid-template-columns: 1fr; }
+            .header-badges { flex-direction: column; gap: 6px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <h1 style="font-size: 24px;"><span style="color: var(--accent);">Li</span>VE</h1>
+            <span>LinkedIn Visual Engine</span>
+        </div>
+        <div class="header-badges">
+            <a href="#" class="storage-badge hidden" id="storageBadge" onclick="goToDataManager(); return false;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                Data Saved Locally
+            </a>
+            <a href="about.html" class="privacy-badge" style="text-decoration: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                100% Local Processing
+            </a>
+        </div>
+    </header>
+
+    <nav class="nav" id="mainNav" style="display: none;">
+        <div class="nav-inner">
+            <button class="nav-btn active" data-view="summary">Summary</button>
+            <button class="nav-btn" data-view="network">Network</button>
+            <button class="nav-btn" data-view="relationships">Relationships</button>
+            <button class="nav-btn" data-view="skills">Skills & Expertise</button>
+            <button class="nav-btn" data-view="inferences">LinkedIn's View</button>
+            <button class="nav-btn" data-view="content">Your Content</button>
+            <button class="nav-btn" data-view="advocates">Your Advocates</button>
+            <button class="nav-btn" data-view="contacts">All Contacts</button>
+        </div>
+    </nav>
+
+    <main class="main">
+        <!-- Upload Section -->
+        <section class="upload-section active" id="uploadSection">
+            <div class="welcome-card">
+                <h2>Visualize Your LinkedIn Network</h2>
+                <p>Drop your LinkedIn data export ZIP file for comprehensive analysis of your professional network.</p>
+
+                <!-- Saved Data Banner (shown when data exists) -->
+                <div class="saved-data-banner" id="savedDataBanner" style="display: none;">
+                    <h3>📊 You have saved network data</h3>
+                    <p id="savedDataInfo">Loading...</p>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="loadSavedBtn">View My Network</button>
+                        <button class="btn btn-secondary" id="uploadNewBtn">Upload New Data</button>
+                        <button class="btn btn-danger" id="clearDataBtn">Clear Saved Data</button>
+                    </div>
+                </div>
+
+                <div id="uploadArea">
+                    <div class="drop-zone" id="dropZone">
+                        <div class="icon">📦</div>
+                        <h3>Drop LinkedIn Export ZIP Here</h3>
+                        <p>or click to select file</p>
+                        <input type="file" id="zipInput" accept=".zip">
+                    </div>
+
+                    <div class="file-status" id="fileStatus" style="display: none;">
+                        <div class="file-item" data-file="connections"><div class="name">Connections</div><div class="count">—</div></div>
+                        <div class="file-item" data-file="messages"><div class="name">Messages</div><div class="count">—</div></div>
+                        <div class="file-item" data-file="skills"><div class="name">Skills</div><div class="count">—</div></div>
+                        <div class="file-item" data-file="endorsements"><div class="name">Endorsements</div><div class="count">—</div></div>
+                        <div class="file-item" data-file="recommendations"><div class="name">Recommendations</div><div class="count">—</div></div>
+                        <div class="file-item" data-file="positions"><div class="name">Positions</div><div class="count">—</div></div>
+                        <div class="file-item" data-file="invitations"><div class="name">Invitations</div><div class="count">—</div></div>
+                        <div class="file-item" data-file="adtargeting"><div class="name">Ad Targeting</div><div class="count">—</div></div>
+                        <div class="file-item" data-file="shares"><div class="name">Shares</div><div class="count">—</div></div>
+                        <div class="file-item" data-file="inferences"><div class="name">Inferences</div><div class="count">—</div></div>
+                    </div>
+
+                    <div class="manual-toggle">
+                        <button id="toggleManual">Or upload individual files manually ▼</button>
+                    </div>
+
+                    <div class="manual-upload" id="manualUpload">
+                        <h4>Upload Individual CSV Files</h4>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Select only the files you want to analyze. Connections is required.</p>
+                        <div class="upload-grid">
+                            <div class="upload-box" data-file="connections"><div class="label">Connections *</div><div class="status">Required</div><input type="file" accept=".csv"></div>
+                            <div class="upload-box" data-file="messages"><div class="label">Messages</div><div class="status">Optional</div><input type="file" accept=".csv"></div>
+                            <div class="upload-box" data-file="skills"><div class="label">Skills</div><div class="status">Optional</div><input type="file" accept=".csv"></div>
+                            <div class="upload-box" data-file="endorsements"><div class="label">Endorsements</div><div class="status">Optional</div><input type="file" accept=".csv"></div>
+                            <div class="upload-box" data-file="recommendations"><div class="label">Recommendations</div><div class="status">Optional</div><input type="file" accept=".csv"></div>
+                            <div class="upload-box" data-file="positions"><div class="label">Positions</div><div class="status">Optional</div><input type="file" accept=".csv"></div>
+                            <div class="upload-box" data-file="invitations"><div class="label">Invitations</div><div class="status">Optional</div><input type="file" accept=".csv"></div>
+                            <div class="upload-box" data-file="adtargeting"><div class="label">Ad Targeting</div><div class="status">Optional</div><input type="file" accept=".csv"></div>
+                            <div class="upload-box" data-file="shares"><div class="label">Shares</div><div class="status">Optional</div><input type="file" accept=".csv"></div>
+                            <div class="upload-box" data-file="inferences"><div class="label">Inferences</div><div class="status">Optional</div><input type="file" accept=".csv"></div>
+                        </div>
+                    </div>
+
+                    <div class="category-setup" id="categorySetup">
+                        <h4>Customize Your Categories</h4>
+                        <p>Define contact categories based on job titles and companies. Keywords are case-insensitive and match partial text.</p>
+                        <div class="category-list" id="categoryList">
+                            <div class="category-row">
+                                <input type="text" class="cat-name" value="Recruiters" placeholder="Category name">
+                                <input type="text" class="cat-keywords" value="recruiter, talent acquisition, headhunter, staffing, sourcer" placeholder="Keywords (comma-separated)">
+                                <button class="remove-cat" title="Remove">×</button>
+                            </div>
+                            <div class="category-row">
+                                <input type="text" class="cat-name" value="Executives" placeholder="Category name">
+                                <input type="text" class="cat-keywords" value="ceo, cfo, cto, cio, coo, cmo, chief, president, founder" placeholder="Keywords (comma-separated)">
+                                <button class="remove-cat" title="Remove">×</button>
+                            </div>
+                            <div class="category-row">
+                                <input type="text" class="cat-name" value="Senior Leaders" placeholder="Category name">
+                                <input type="text" class="cat-keywords" value="vp, vice president, director, managing director, partner, svp, evp" placeholder="Keywords (comma-separated)">
+                                <button class="remove-cat" title="Remove">×</button>
+                            </div>
+                            <div class="category-row">
+                                <input type="text" class="cat-name" value="Investors" placeholder="Category name">
+                                <input type="text" class="cat-keywords" value="investor, venture, private equity, vc, portfolio, angel" placeholder="Keywords (comma-separated)">
+                                <button class="remove-cat" title="Remove">×</button>
+                            </div>
+                        </div>
+                        <button class="add-category" id="addCategory">+ Add Category</button>
+                    </div>
+
+                    <button class="analyze-btn" id="analyzeBtn" disabled>Analyze My Network</button>
+                </div>
+
+                <div class="privacy-note">
+                    <strong>100% Private:</strong> All processing happens locally in your browser. Data is stored in your browser's local storage (IndexedDB) and never uploaded anywhere. Works offline.
+                </div>
+
+                <p style="margin-top: 16px; font-size: 12px; color: var(--text-secondary); text-align: center;">
+                    <a href="https://www.linkedin.com/mypreferences/d/download-my-data" target="_blank" style="color: var(--info);">Get your LinkedIn data export →</a>
+                </p>
+
+                <p style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12px; text-align: center;">
+                    <a href="about.html" style="color: var(--text-secondary);">About LiVE</a>
+                    <span style="margin: 0 8px; color: var(--border);">•</span>
+                    <a href="https://robertthorson.com" target="_blank" style="color: var(--text-secondary);">RPT Innovation</a>
+                </p>
+            </div>
+        </section>
+
+        <!-- Dashboard -->
+        <section class="dashboard" id="dashboard">
+            <!-- SUMMARY -->
+            <div class="view-panel active" id="view-summary">
+                <div class="hero-stats" id="heroStats"></div>
+                <div class="card"><div class="card-body">
+                    <div class="section-header">
+                        <div class="section-label">Executive Summary</div>
+                        <h2 class="section-title" id="summaryTitle">Your Network Intelligence Report</h2>
+                    </div>
+                    <p id="summaryText" style="margin-bottom: 16px; max-width: 800px;"></p>
+                    <div class="callout" id="summaryCallout"></div>
+                </div></div>
+                <div class="stats-grid" id="quickStats"></div>
+                <div class="grid-2">
+                    <div class="card"><div class="card-header">Network Categories</div><div class="card-body"><div class="chart-container"><canvas id="categoryChart"></canvas></div></div></div>
+                    <div class="card"><div class="card-header">Connection Timeline</div><div class="card-body"><div class="chart-container"><canvas id="timelineChart"></canvas></div></div></div>
+                </div>
+            </div>
+
+            <!-- NETWORK -->
+            <div class="view-panel" id="view-network">
+                <div class="section-header"><div class="section-label">Network Shape</div><h2 class="section-title">What You've Built</h2><p class="section-intro">Understanding your network's composition, concentration, and strategic gaps.</p></div>
+                <div class="stats-grid" id="networkStats"></div>
+                <div class="grid-2">
+                    <div class="card"><div class="card-header">Top Companies</div><div class="card-body"><div class="chart-container"><canvas id="companyChart"></canvas></div></div></div>
+                    <div class="card"><div class="card-header">Seniority Distribution</div><div class="card-body"><div class="chart-container"><canvas id="seniorityChart"></canvas></div></div></div>
+                </div>
+                <div class="card"><div class="card-header">Network Concentration</div><div class="card-body" id="concentrationAnalysis"></div></div>
+            </div>
+
+            <!-- RELATIONSHIPS -->
+            <div class="view-panel" id="view-relationships">
+                <div class="section-header"><div class="section-label">Relationship Depth</div><h2 class="section-title">How Your Network Behaves</h2><p class="section-intro">The truth about engagement—and the opportunities it reveals.</p></div>
+                <div class="card"><div class="card-body">
+                    <h4 style="margin-bottom: 12px;">Engagement Analysis</h4>
+                    <div class="depth-bar" id="depthBar"></div>
+                    <div id="depthLegend" style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary);"></div>
+                </div></div>
+                <div class="big-stats" id="relationshipStats"></div>
+                <div class="editorial" id="relationshipEditorial"></div>
+                <div class="grid-2">
+                    <div class="card"><div class="card-header">Relationship Strength</div><div class="card-body"><div class="chart-container"><canvas id="relationshipChart"></canvas></div></div></div>
+                    <div class="card"><div class="card-header">Dormancy Analysis</div><div class="card-body" id="dormancyAnalysis"></div></div>
+                </div>
+                <div class="card"><div class="card-header">Key Relationship Insights</div><div class="card-body" id="relationshipInsights"></div></div>
+            </div>
+
+            <!-- SKILLS -->
+            <div class="view-panel" id="view-skills">
+                <div class="section-header"><div class="section-label">Expertise Profile</div><h2 class="section-title">Your Skills & Endorsements</h2><p class="section-intro">What you claim vs. what others validate.</p></div>
+                <div class="grid-2">
+                    <div class="card"><div class="card-header">Your Listed Skills</div><div class="card-body" id="skillsList"></div></div>
+                    <div class="card"><div class="card-header">Most Endorsed Skills</div><div class="card-body"><div class="chart-container"><canvas id="endorsementChart"></canvas></div></div></div>
+                </div>
+                <div class="card"><div class="card-header">Top Endorsers</div><div class="card-body"><p style="margin-bottom: 12px; color: var(--text-secondary); font-size: 13px;">People who validate your expertise most frequently.</p><table class="data-table" id="endorsersTable"><thead><tr><th>Name</th><th>Skills Endorsed</th><th>LinkedIn</th></tr></thead><tbody></tbody></table></div></div>
+            </div>
+
+            <!-- ADVOCATES -->
+            <div class="view-panel" id="view-advocates">
+                <div class="section-header"><div class="section-label">Your Champions</div><h2 class="section-title">People Who Advocate for You</h2><p class="section-intro">Written recommendations are the strongest form of professional validation.</p></div>
+                <div class="stats-grid" id="advocateStats"></div>
+                <div id="recommendationsList"></div>
+            </div>
+
+            <!-- PRIORITIES -->
+            <div class="view-panel" id="view-priorities">
+                <div class="section-header"><div class="section-label">Strategic Action</div><h2 class="section-title">Where the Leverage Is</h2><p class="section-intro">Prioritized contacts based on strategic value and relationship status.</p></div>
+                <div class="card"><div class="card-header">Strategic Outreach Priorities</div><div class="card-body"><table class="data-table" id="prioritiesTable"><thead><tr><th>#</th><th>Name</th><th>Company / Title</th><th>Why</th><th>Strength</th></tr></thead><tbody></tbody></table></div></div>
+                <div class="section-header" style="margin-top: 32px;"><h3 class="section-title">Revival Playbooks</h3><p class="section-intro">Copy-paste openers for high-value dormant relationships.</p></div>
+                <div class="grid-2" id="playbookCards"></div>
+            </div>
+
+            <!-- INFERENCES -->
+            <div class="view-panel" id="view-inferences">
+                <div class="section-header"><div class="section-label">Reality Check</div><h2 class="section-title">How LinkedIn Sees You</h2><p class="section-intro">What LinkedIn infers about you for ad targeting—often wrong, sometimes amusing.</p></div>
+                <div id="inferencesContent"></div>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="view-panel" id="view-content">
+                <div class="section-header"><div class="section-label">Thought Leadership</div><h2 class="section-title">Your Content Activity</h2><p class="section-intro">Posting patterns, themes, and engagement opportunities.</p></div>
+                <div class="stats-grid" id="contentStats"></div>
+                <div class="grid-2">
+                    <div class="card"><div class="card-header">Posting Timeline</div><div class="card-body"><div class="chart-container"><canvas id="postingChart"></canvas></div></div></div>
+                    <div class="card"><div class="card-header">Content Themes</div><div class="card-body" id="contentThemes"></div></div>
+                </div>
+                <div class="editorial" id="contentEditorial"></div>
+            </div>
+
+            <!-- CONTACTS -->
+            <div class="view-panel" id="view-contacts">
+                <div class="section-header"><h2 class="section-title">All Contacts</h2><p class="section-intro">Search and filter your complete network.</p></div>
+                <div class="contact-filters">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search name, company, title...">
+                    <select class="filter-select" id="categoryFilter"><option value="all">All Categories</option><option value="recruiter">Recruiters</option><option value="executive">Executives</option><option value="pe">PE/VC</option><option value="endorsed">Endorsed You</option></select>
+                    <select class="filter-select" id="relationshipFilter"><option value="all">All Relationships</option><option value="strong">Strong</option><option value="warm">Warm</option><option value="cold">Cold</option><option value="dormant">Dormant</option></select>
+                    <button class="action-btn danger" id="clearAllDataBtn">Clear All Data</button>
+                </div>
+                <div class="contact-grid" id="contactGrid"></div>
+                <div style="margin-top: 20px; padding: 16px; background: var(--bg-warm); border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <p style="font-size: 13px; color: var(--text-secondary);">Export enriched contacts with all analysis.</p>
+                    <button class="action-btn primary" id="exportBtn">Export CSV</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // ============================================
+        // IndexedDB Storage Layer
+        // ============================================
+        const DB_NAME = 'LiVE_NetworkData';
+        const DB_VERSION = 1;
+        let db = null;
+
+        async function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+
+                    // Store for raw data
+                    if (!database.objectStoreNames.contains('rawData')) {
+                        database.createObjectStore('rawData', { keyPath: 'id' });
+                    }
+
+                    // Store for analysis results
+                    if (!database.objectStoreNames.contains('analysis')) {
+                        database.createObjectStore('analysis', { keyPath: 'id' });
+                    }
+
+                    // Store for enriched contacts
+                    if (!database.objectStoreNames.contains('contacts')) {
+                        database.createObjectStore('contacts', { keyPath: 'id' });
+                    }
+
+                    // Store for categories
+                    if (!database.objectStoreNames.contains('categories')) {
+                        database.createObjectStore('categories', { keyPath: 'id' });
+                    }
+
+                    // Store for metadata
+                    if (!database.objectStoreNames.contains('metadata')) {
+                        database.createObjectStore('metadata', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        async function saveToDB(storeName, data) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(storeName, 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.put({ id: 'main', data: data, savedAt: new Date().toISOString() });
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function loadFromDB(storeName) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(storeName, 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.get('main');
+                request.onsuccess = () => resolve(request.result?.data || null);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getMetadata() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction('metadata', 'readonly');
+                const store = transaction.objectStore('metadata');
+                const request = store.get('main');
+                request.onsuccess = () => resolve(request.result || null);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function clearAllData() {
+            const storeNames = ['rawData', 'analysis', 'contacts', 'categories', 'metadata'];
+            for (const storeName of storeNames) {
+                await new Promise((resolve, reject) => {
+                    const transaction = db.transaction(storeName, 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.clear();
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+        }
+
+        async function saveAllData() {
+            await saveToDB('rawData', rawData);
+            await saveToDB('analysis', analysis);
+            await saveToDB('contacts', enrichedContacts);
+            await saveToDB('categories', customCategories);
+            await saveToDB('metadata', {
+                connectionCount: enrichedContacts.length,
+                savedAt: new Date().toISOString()
+            });
+            document.getElementById('storageBadge').classList.remove('hidden');
+        }
+
+        async function loadAllData() {
+            rawData = await loadFromDB('rawData') || rawData;
+            analysis = await loadFromDB('analysis') || analysis;
+            enrichedContacts = await loadFromDB('contacts') || enrichedContacts;
+            customCategories = await loadFromDB('categories') || customCategories;
+        }
+
+        // ============================================
+        // Global state
+        // ============================================
+        let rawData = { connections: [], messages: [], skills: [], endorsements: [], recommendations: [], positions: [], invitations: [], adtargeting: [], inferences: [], shares: [] };
+        let enrichedContacts = [];
+        let analysis = {};
+        let customCategories = [];
+
+        // ============================================
+        // Initialize on page load
+        // ============================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await initDB();
+                const metadata = await getMetadata();
+
+                if (metadata && metadata.data && metadata.data.connectionCount > 0) {
+                    // Show saved data banner
+                    document.getElementById('savedDataBanner').style.display = 'block';
+                    document.getElementById('uploadArea').style.display = 'none';
+
+                    const savedDate = new Date(metadata.data.savedAt);
+                    const formattedDate = savedDate.toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', year: 'numeric',
+                        hour: 'numeric', minute: '2-digit'
+                    });
+                    document.getElementById('savedDataInfo').textContent =
+                        `${metadata.data.connectionCount.toLocaleString()} connections • Last saved ${formattedDate}`;
+
+                    document.getElementById('storageBadge').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('IndexedDB initialization failed:', error);
+            }
+        });
+
+        // Saved data banner handlers
+        document.getElementById('loadSavedBtn')?.addEventListener('click', async () => {
+            await loadAllData();
+            showDashboard();
+        });
+
+        document.getElementById('uploadNewBtn')?.addEventListener('click', () => {
+            document.getElementById('savedDataBanner').style.display = 'none';
+            document.getElementById('uploadArea').style.display = 'block';
+        });
+
+        document.getElementById('clearDataBtn')?.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to clear all saved data? This cannot be undone.')) {
+                await clearAllData();
+                document.getElementById('savedDataBanner').style.display = 'none';
+                document.getElementById('uploadArea').style.display = 'block';
+                document.getElementById('storageBadge').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('clearAllDataBtn')?.addEventListener('click', async () => {
+            if (confirm('Clear all saved data and start over?\n\nThis will delete your network data from this browser.')) {
+                await clearAllData();
+                document.getElementById('storageBadge').classList.add('hidden');
+                location.reload();
+            }
+        });
+
+        // Go to data manager (from storage badge click)
+        function goToDataManager() {
+            // Hide dashboard, show upload section with saved data banner
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('mainNav').style.display = 'none';
+            document.getElementById('uploadSection').classList.add('active');
+            document.getElementById('savedDataBanner').style.display = 'block';
+            document.getElementById('uploadArea').style.display = 'none';
+
+            // Update the saved data info
+            const metadata = { connectionCount: enrichedContacts.length };
+            document.getElementById('savedDataInfo').textContent =
+                `${metadata.connectionCount.toLocaleString()} connections • Click below to manage your data`;
+        }
+
+        // ============================================
+        // Category helpers
+        // ============================================
+        function getCategories() {
+            const rows = document.querySelectorAll('.category-row');
+            return Array.from(rows).map(row => {
+                const name = row.querySelector('.cat-name').value.trim();
+                const keywords = row.querySelector('.cat-keywords').value.split(',').map(k => k.trim().toLowerCase()).filter(k => k);
+                return { name, keywords };
+            }).filter(c => c.name && c.keywords.length);
+        }
+
+        function matchesCategory(position, company, keywords) {
+            const text = `${position} ${company}`.toLowerCase();
+            return keywords.some(kw => text.includes(kw));
+        }
+
+        // File mapping for ZIP extraction
+        const fileMapping = {
+            'connections': ['connections.csv'],
+            'messages': ['messages.csv'],
+            'skills': ['skills.csv'],
+            'endorsements': ['endorsement_received_info.csv', 'endorsements.csv'],
+            'recommendations': ['recommendations_received.csv', 'recommendations.csv'],
+            'positions': ['positions.csv'],
+            'invitations': ['invitations.csv'],
+            'adtargeting': ['ad_targeting.csv'],
+            'inferences': ['inferences_about_you.csv', 'inferences.csv'],
+            'shares': ['shares.csv']
+        };
+
+        function getFileName(path) {
+            return path.split('/').pop().toLowerCase();
+        }
+
+        // ============================================
+        // ZIP Upload handling
+        // ============================================
+        const dropZone = document.getElementById('dropZone');
+        const zipInput = document.getElementById('zipInput');
+        const fileStatus = document.getElementById('fileStatus');
+
+        dropZone.addEventListener('click', () => zipInput.click());
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleZipFile(e.dataTransfer.files[0]); });
+        zipInput.addEventListener('change', e => { if (e.target.files[0]) handleZipFile(e.target.files[0]); });
+
+        async function handleZipFile(file) {
+            if (!file || !file.name.toLowerCase().endsWith('.zip')) {
+                alert('Please upload a ZIP file from your LinkedIn data export.');
+                return;
+            }
+
+            dropZone.classList.add('processing');
+            dropZone.querySelector('h3').textContent = 'Extracting files...';
+            dropZone.querySelector('p').textContent = file.name;
+            fileStatus.style.display = 'grid';
+
+            try {
+                const zip = await JSZip.loadAsync(file);
+                const zipFiles = Object.keys(zip.files);
+
+                Object.keys(rawData).forEach(k => rawData[k] = []);
+
+                for (const [dataKey, possibleNames] of Object.entries(fileMapping)) {
+                    const match = zipFiles.find(f => {
+                        const fname = getFileName(f);
+                        return possibleNames.some(name => fname === name.toLowerCase());
+                    });
+                    const statusEl = document.querySelector(`.file-item[data-file="${dataKey}"]`);
+
+                    if (match && !zip.files[match].dir) {
+                        const content = await zip.files[match].async('text');
+                        rawData[dataKey] = parseCSV(content);
+                        if (statusEl) {
+                            statusEl.classList.add('found');
+                            statusEl.classList.remove('missing');
+                            statusEl.querySelector('.count').textContent = `✓ ${rawData[dataKey].length}`;
+                        }
+                    } else {
+                        if (statusEl) {
+                            statusEl.classList.add('missing');
+                            statusEl.classList.remove('found');
+                            statusEl.querySelector('.count').textContent = '—';
+                        }
+                    }
+                }
+
+                updateAnalyzeButton();
+                dropZone.classList.remove('processing');
+                dropZone.classList.add('success');
+                dropZone.querySelector('.icon').textContent = '✅';
+
+                const hasConnections = rawData.connections.length > 0;
+                dropZone.querySelector('h3').textContent = hasConnections ? 'Ready to Analyze!' : 'No Connections Found';
+
+                const foundCount = Object.values(rawData).filter(arr => arr.length > 0).length;
+                dropZone.querySelector('p').textContent = `Found ${foundCount} data files in ${file.name}`;
+
+            } catch (error) {
+                console.error('Error extracting ZIP:', error);
+                dropZone.classList.remove('processing');
+                dropZone.querySelector('h3').textContent = 'Error reading ZIP';
+                dropZone.querySelector('p').textContent = 'Please try again or check the file format.';
+            }
+        }
+
+        // Manual upload toggle
+        document.getElementById('toggleManual').addEventListener('click', function() {
+            const manual = document.getElementById('manualUpload');
+            manual.classList.toggle('active');
+            this.textContent = manual.classList.contains('active') ? 'Hide manual upload ▲' : 'Or upload individual files manually ▼';
+        });
+
+        // Manual file upload handlers
+        document.querySelectorAll('.upload-box').forEach(box => {
+            const fileType = box.dataset.file;
+            const input = box.querySelector('input');
+            box.addEventListener('click', () => input.click());
+            input.addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    rawData[fileType] = parseCSV(ev.target.result);
+                    box.classList.add('uploaded');
+                    box.querySelector('.status').textContent = `✓ ${rawData[fileType].length}`;
+                    box.querySelector('.status').classList.add('success');
+                    const statusEl = document.querySelector(`.file-item[data-file="${fileType}"]`);
+                    if (statusEl) {
+                        statusEl.classList.add('found');
+                        statusEl.classList.remove('missing');
+                        statusEl.querySelector('.count').textContent = `✓ ${rawData[fileType].length}`;
+                    }
+                    updateAnalyzeButton();
+                };
+                reader.readAsText(file);
+            });
+        });
+
+        function updateAnalyzeButton() {
+            const hasConnections = rawData.connections.length > 0;
+            document.getElementById('analyzeBtn').disabled = !hasConnections;
+            if (hasConnections) {
+                document.getElementById('categorySetup').classList.add('active');
+            }
+        }
+
+        // Category management
+        document.getElementById('addCategory').addEventListener('click', () => {
+            const list = document.getElementById('categoryList');
+            const row = document.createElement('div');
+            row.className = 'category-row';
+            row.innerHTML = `
+                <input type="text" class="cat-name" placeholder="Category name">
+                <input type="text" class="cat-keywords" placeholder="Keywords (comma-separated)">
+                <button class="remove-cat" title="Remove">×</button>
+            `;
+            list.appendChild(row);
+            row.querySelector('.remove-cat').addEventListener('click', () => row.remove());
+        });
+
+        document.querySelectorAll('.remove-cat').forEach(btn => {
+            btn.addEventListener('click', () => btn.closest('.category-row').remove());
+        });
+
+        // ============================================
+        // CSV Parsing
+        // ============================================
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            if (!lines.length) return [];
+
+            let headerIndex = 0;
+            for (let i = 0; i < Math.min(10, lines.length); i++) {
+                const line = lines[i].toLowerCase();
+                if (line.includes('first name') || line.includes('from') || line.includes('skill name') ||
+                    line.includes('endorser') || line.includes('recommender') || line.includes('company name') ||
+                    line.includes('date') || line.includes('sharelink') || line.includes('category')) {
+                    headerIndex = i;
+                    break;
+                }
+            }
+
+            const headers = parseCSVLine(lines[headerIndex]);
+            return lines.slice(headerIndex + 1).filter(l => l.trim()).map(line => {
+                const values = parseCSVLine(line);
+                const row = {};
+                headers.forEach((h, i) => row[h.trim()] = (values[i] || '').trim());
+                return row;
+            });
+        }
+
+        function parseCSVLine(line) {
+            const values = [];
+            let current = '', inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') { if (inQuotes && line[i + 1] === '"') { current += '"'; i++; } else inQuotes = !inQuotes; }
+                else if (char === ',' && !inQuotes) { values.push(current); current = ''; }
+                else current += char;
+            }
+            values.push(current);
+            return values;
+        }
+
+        // ============================================
+        // Analysis
+        // ============================================
+        document.getElementById('analyzeBtn').addEventListener('click', runAnalysis);
+
+        async function runAnalysis() {
+            customCategories = getCategories();
+
+            const messageIndex = buildMessageIndex();
+            const endorserIndex = buildEndorserIndex();
+            const companyIndex = {};
+
+            enrichedContacts = rawData.connections.map(conn => {
+                const name = `${conn['First Name'] || ''} ${conn['Last Name'] || ''}`.trim();
+                const position = conn['Position'] || '';
+                const company = conn['Company'] || '';
+                const linkedInUrl = conn['URL'] || conn['Profile URL'] || conn['LinkedIn URL'] || '';
+                const email = conn['Email Address'] || '';
+                const connectedOn = conn['Connected On'] || '';
+                const connectedDate = parseDate(connectedOn);
+
+                if (company) companyIndex[company] = (companyIndex[company] || 0) + 1;
+
+                const msgHistory = messageIndex[name.toLowerCase()] || { count: 0, lastDate: null };
+                const endorsed = endorserIndex[name.toLowerCase()] || { skills: [], count: 0 };
+
+                const categories = {};
+                customCategories.forEach(cat => {
+                    categories[cat.name] = matchesCategory(position, company, cat.keywords);
+                });
+
+                const relStrength = calcRelStrength(msgHistory.count, connectedDate);
+                const isDormant = checkDormancy(msgHistory.lastDate, connectedOn);
+
+                return { name, position, company, linkedInUrl, email, connectedOn, connectedDate, messageCount: msgHistory.count, lastContact: msgHistory.lastDate, relStrength, categories, isDormant, endorsedSkills: endorsed.skills, endorsementCount: endorsed.count };
+            });
+
+            buildAnalysis(companyIndex, endorserIndex);
+
+            // Save to IndexedDB
+            await saveAllData();
+
+            showDashboard();
+        }
+
+        function buildMessageIndex() {
+            const index = {};
+            rawData.messages.forEach(msg => {
+                const from = msg['FROM'] || msg['From'] || '';
+                const to = msg['TO'] || msg['To'] || '';
+                const date = msg['DATE'] || msg['Date'] || '';
+                [from, to].forEach(name => {
+                    if (!name) return;
+                    const key = name.toLowerCase().trim();
+                    if (!index[key]) index[key] = { count: 0, lastDate: null };
+                    index[key].count++;
+                    const msgDate = parseDate(date);
+                    if (msgDate && (!index[key].lastDate || msgDate > new Date(index[key].lastDate))) index[key].lastDate = date;
+                });
+            });
+            return index;
+        }
+
+        function buildEndorserIndex() {
+            const index = {};
+            rawData.endorsements.forEach(e => {
+                const name = `${e['Endorser First Name'] || ''} ${e['Endorser Last Name'] || ''}`.trim().toLowerCase();
+                const skill = e['Skill Name'] || '';
+                if (!name) return;
+                if (!index[name]) index[name] = { skills: [], count: 0 };
+                index[name].skills.push(skill);
+                index[name].count++;
+            });
+            return index;
+        }
+
+        function parseDate(str) {
+            if (!str) return null;
+            const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+            const match = str.match(/(\d{1,2})\s+(\w{3})\s+(\d{4})/);
+            if (match) {
+                const day = parseInt(match[1]);
+                const month = months[match[2].toLowerCase()];
+                const year = parseInt(match[3]);
+                if (month !== undefined) return new Date(year, month, day);
+            }
+            const isoMatch = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+            if (isoMatch) return new Date(isoMatch[1], parseInt(isoMatch[2]) - 1, isoMatch[3]);
+            const d = new Date(str);
+            return isNaN(d) ? null : d;
+        }
+
+        function calcRelStrength(msgCount, connDate) {
+            const now = new Date();
+            const sixMonthsAgo = new Date(now.setMonth(now.getMonth() - 6));
+            if (msgCount >= 3) return 'strong';
+            if (msgCount >= 1) return 'warm';
+            if (connDate && connDate > sixMonthsAgo) return 'new';
+            return 'cold';
+        }
+
+        function checkDormancy(lastContact, connectedOn) {
+            const lastDate = parseDate(lastContact) || parseDate(connectedOn);
+            if (!lastDate) return false;
+            return (new Date() - lastDate) / (1000 * 60 * 60 * 24 * 30) > 12;
+        }
+
+        function buildAnalysis(companyIndex, endorserIndex) {
+            const total = enrichedContacts.length;
+            const messaged = enrichedContacts.filter(c => c.messageCount > 0).length;
+            const neverMessaged = total - messaged;
+            const strong = enrichedContacts.filter(c => c.relStrength === 'strong').length;
+            const warm = enrichedContacts.filter(c => c.relStrength === 'warm').length;
+            const cold = enrichedContacts.filter(c => c.relStrength === 'cold').length;
+            const newConn = enrichedContacts.filter(c => c.relStrength === 'new').length;
+            const dormant = enrichedContacts.filter(c => c.isDormant).length;
+
+            const categoryCounts = {};
+            customCategories.forEach(cat => {
+                categoryCounts[cat.name] = enrichedContacts.filter(c => c.categories && c.categories[cat.name]).length;
+            });
+
+            const topCompanies = Object.entries(companyIndex).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const dates = enrichedContacts.map(c => c.connectedDate).filter(Boolean);
+            const minYear = dates.length ? new Date(Math.min(...dates)).getFullYear() : new Date().getFullYear();
+            const yearsBuilding = new Date().getFullYear() - minYear;
+
+            const yearCounts = {};
+            enrichedContacts.forEach(c => { if (c.connectedDate) { const y = c.connectedDate.getFullYear(); yearCounts[y] = (yearCounts[y] || 0) + 1; } });
+
+            const skillCounts = {};
+            rawData.endorsements.forEach(e => { const skill = e['Skill Name'] || ''; if (skill) skillCounts[skill] = (skillCounts[skill] || 0) + 1; });
+            const topEndorsedSkills = Object.entries(skillCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+            const topEndorsers = Object.entries(endorserIndex).sort((a, b) => b[1].count - a[1].count).slice(0, 10);
+
+            const shares = rawData.shares;
+            const postDates = shares.map(s => parseDate(s['Date'])).filter(Boolean);
+            const postsByMonth = {};
+            shares.forEach(s => {
+                const d = parseDate(s['Date']);
+                if (d) { const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; postsByMonth[key] = (postsByMonth[key] || 0) + 1; }
+            });
+            const firstPost = postDates.length ? new Date(Math.min(...postDates)) : null;
+            const lastPost = postDates.length ? new Date(Math.max(...postDates)) : null;
+
+            const themeKeywords = { 'AI/GenAI': ['ai', 'genai', 'artificial intelligence', 'machine learning', 'copilot', 'chatgpt', 'llm', 'agents', 'agentic'], 'Strategy': ['strategy', 'strategic', 'transformation', 'roadmap'], 'Leadership': ['leadership', 'executive', 'c-suite', 'management', 'ceo', 'cfo'], 'Innovation': ['innovation', 'innovative', 'disrupt', 'emerging'], 'Data': ['data', 'analytics', 'insights', 'metrics'], 'Change Management': ['change management', 'adoption', 'organizational change'] };
+            const themeCounts = {};
+            shares.forEach(s => {
+                const text = (s['ShareCommentary'] || '').toLowerCase();
+                Object.entries(themeKeywords).forEach(([theme, keywords]) => {
+                    if (keywords.some(kw => text.includes(kw))) themeCounts[theme] = (themeCounts[theme] || 0) + 1;
+                });
+            });
+
+            analysis = { total, messaged, neverMessaged, strong, warm, cold, newConn, dormant, categoryCounts, topCompanies, yearsBuilding, yearCounts, engagementRate: ((messaged / total) * 100).toFixed(1), neverMessagedPct: ((neverMessaged / total) * 100).toFixed(0), skills: rawData.skills, topEndorsedSkills, topEndorsers, recommendations: rawData.recommendations, inferences: rawData.inferences, adtargeting: rawData.adtargeting, shares, postsByMonth, totalPosts: shares.length, firstPost, lastPost, themeCounts, customCategories };
+        }
+
+        function showDashboard() {
+            document.getElementById('uploadSection').classList.remove('active');
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('mainNav').style.display = 'block';
+            renderAllViews();
+        }
+
+        // Nav
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
+                document.getElementById(`view-${btn.dataset.view}`).classList.add('active');
+            });
+        });
+
+        function renderAllViews() {
+            renderSummary();
+            renderNetwork();
+            renderRelationships();
+            renderSkills();
+            renderAdvocates();
+            renderPriorities();
+            renderInferences();
+            renderContent();
+            renderContacts();
+        }
+
+        function renderSummary() {
+            const postCount = analysis.totalPosts || 0;
+            const catNames = Object.keys(analysis.categoryCounts);
+            const topCat = catNames.length ? catNames[0] : 'Contacts';
+            const topCatCount = catNames.length ? analysis.categoryCounts[catNames[0]] : 0;
+
+            document.getElementById('heroStats').innerHTML = `
+                <div class="hero-stat"><div class="value">${analysis.total.toLocaleString()}</div><div class="label">Connections</div></div>
+                <div class="hero-stat"><div class="value">${topCatCount}</div><div class="label">${topCat}</div></div>
+                <div class="hero-stat"><div class="value">${analysis.neverMessagedPct}%</div><div class="label">Never Messaged</div></div>
+                <div class="hero-stat"><div class="value">${analysis.recommendations.length}</div><div class="label">Recommendations</div></div>
+                <div class="hero-stat"><div class="value">${postCount > 0 ? postCount : analysis.yearsBuilding}</div><div class="label">${postCount > 0 ? 'Posts' : 'Years Building'}</div></div>
+            `;
+
+            const catSummary = catNames.map(cat => `${analysis.categoryCounts[cat]} ${cat.toLowerCase()}`).join(', ');
+            document.getElementById('summaryText').innerHTML = `You've built a network of <strong>${analysis.total.toLocaleString()} connections</strong> over ${analysis.yearsBuilding} years. Your network includes: ${catSummary || 'various professionals'}, and ${analysis.recommendations.length} written recommendations.`;
+            document.getElementById('summaryCallout').innerHTML = `<p><strong>Key insight:</strong> You've messaged only ${analysis.engagementRate}% of connections. ${analysis.dormant} contacts have gone dormant. Reactivating these relationships is your highest-leverage move.</p>`;
+
+            const colors = ['accent', '', 'success', 'danger'];
+            const statsHtml = catNames.slice(0, 3).map((cat, i) =>
+                `<div class="stat-card ${colors[i] || ''}"><div class="value">${analysis.categoryCounts[cat]}</div><div class="label">${cat}</div></div>`
+            ).join('') + `<div class="stat-card danger"><div class="value">${analysis.dormant}</div><div class="label">Dormant</div></div>`;
+            document.getElementById('quickStats').innerHTML = statsHtml;
+
+            const chartColors = ['#c94a4a', '#2d8a6e', '#667eea', '#c9a227', '#636e72'];
+            const catData = catNames.map(cat => analysis.categoryCounts[cat]);
+            const otherCount = analysis.total - catData.reduce((a, b) => a + b, 0);
+            new Chart(document.getElementById('categoryChart'), { type: 'doughnut', data: { labels: [...catNames, 'Other'], datasets: [{ data: [...catData, Math.max(0, otherCount)], backgroundColor: [...chartColors.slice(0, catNames.length), '#d4d4d4'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
+            const years = Object.keys(analysis.yearCounts).sort();
+            new Chart(document.getElementById('timelineChart'), { type: 'bar', data: { labels: years, datasets: [{ data: years.map(y => analysis.yearCounts[y]), backgroundColor: '#c9a227', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        }
+
+        function renderNetwork() {
+            const topCompany = analysis.topCompanies[0] || ['N/A', 0];
+            const catNames = Object.keys(analysis.categoryCounts);
+
+            let statsHtml = `<div class="stat-card accent"><div class="value">${topCompany[1]}</div><div class="label">${topCompany[0].substring(0, 20)}</div><div class="note">Largest cluster</div></div>`;
+            catNames.slice(0, 2).forEach(cat => {
+                statsHtml += `<div class="stat-card"><div class="value">${analysis.categoryCounts[cat]}</div><div class="label">${cat}</div></div>`;
+            });
+            statsHtml += `<div class="stat-card"><div class="value">${((topCompany[1] / analysis.total) * 100).toFixed(0)}%</div><div class="label">Top Concentration</div></div>`;
+            document.getElementById('networkStats').innerHTML = statsHtml;
+
+            new Chart(document.getElementById('companyChart'), { type: 'bar', data: { labels: analysis.topCompanies.map(c => c[0].substring(0, 18)), datasets: [{ data: analysis.topCompanies.map(c => c[1]), backgroundColor: '#c9a227', borderRadius: 4 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+
+            const chartColors = ['#667eea', '#c9a227', '#2d8a6e', '#c94a4a', '#636e72'];
+            const catData = catNames.map(cat => analysis.categoryCounts[cat]);
+            const otherCount = Math.max(0, analysis.total - catData.reduce((a, b) => a + b, 0));
+            new Chart(document.getElementById('seniorityChart'), { type: 'doughnut', data: { labels: [...catNames, 'Other'], datasets: [{ data: [...catData, otherCount], backgroundColor: [...chartColors.slice(0, catNames.length), '#d4d4d4'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
+
+            document.getElementById('concentrationAnalysis').innerHTML = analysis.topCompanies.slice(0, 5).map(c => `<div class="progress-item"><div class="label-row"><span>${c[0]}</span><span>${((c[1]/analysis.total)*100).toFixed(1)}%</span></div><div class="progress-bar"><div class="progress-fill" style="width: ${(c[1]/analysis.total)*100}%; background: var(--accent);"></div></div></div>`).join('');
+        }
+
+        function renderRelationships() {
+            const strongPct = (analysis.strong / analysis.total * 100).toFixed(1);
+            const warmPct = (analysis.warm / analysis.total * 100).toFixed(1);
+            const coldPct = (analysis.cold / analysis.total * 100).toFixed(1);
+            document.getElementById('depthBar').innerHTML = `<div class="depth-segment" style="width: ${strongPct}%; background: #2d8a6e;">${strongPct > 3 ? strongPct + '%' : ''}</div><div class="depth-segment" style="width: ${warmPct}%; background: #667eea;">${warmPct > 3 ? warmPct + '%' : ''}</div><div class="depth-segment" style="width: ${coldPct}%; background: #d4d4d4; color: #666;">${analysis.neverMessagedPct}% Never Messaged</div>`;
+            document.getElementById('depthLegend').innerHTML = `<span>● Strong (${analysis.strong})</span><span style="color:#667eea;">● Warm (${analysis.warm})</span><span style="color:#d4d4d4;">● Cold (${analysis.cold})</span>`;
+            document.getElementById('relationshipStats').innerHTML = `<div class="big-stat"><div class="value accent">${analysis.messaged}</div><div class="label">Ever Messaged</div></div><div class="big-stat"><div class="value danger">${analysis.neverMessaged}</div><div class="label">Never Messaged</div></div><div class="big-stat"><div class="value">${analysis.engagementRate}%</div><div class="label">Engagement Rate</div></div>`;
+            document.getElementById('relationshipEditorial').innerHTML = `<div class="editorial-label">The Opportunity</div><p>Most professionals never message 90% of their connections. In that ${analysis.neverMessagedPct}% are dormant relationships with executives, former colleagues in buying roles, and potential clients who already know your name. The network is built—now it needs to be worked.</p>`;
+            new Chart(document.getElementById('relationshipChart'), { type: 'doughnut', data: { labels: ['Strong', 'Warm', 'Cold'], datasets: [{ data: [analysis.strong, analysis.warm, analysis.cold], backgroundColor: ['#2d8a6e', '#667eea', '#d4d4d4'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
+
+            const firstCat = customCategories[0]?.name;
+            const dormantInCat = firstCat ? enrichedContacts.filter(c => c.categories && c.categories[firstCat] && c.isDormant).length : 0;
+            const catTotal = firstCat ? analysis.categoryCounts[firstCat] : 0;
+
+            document.getElementById('dormancyAnalysis').innerHTML = `
+                ${firstCat ? `<div class="progress-item"><div class="label-row"><span>Dormant ${firstCat}</span><span style="color: var(--danger);">${dormantInCat}</span></div><div class="progress-bar"><div class="progress-fill" style="width: ${catTotal ? (dormantInCat/catTotal)*100 : 0}%; background: var(--danger);"></div></div></div>` : ''}
+                <div class="progress-item"><div class="label-row"><span>Total Dormant</span><span>${analysis.dormant}</span></div><div class="progress-bar"><div class="progress-fill" style="width: ${(analysis.dormant/analysis.total)*100}%; background: var(--warning);"></div></div></div>
+            `;
+
+            document.getElementById('relationshipInsights').innerHTML = dormantInCat > 0 && firstCat ? `<div class="insight-card"><h4>⚡ Dormant ${firstCat} Opportunity</h4><p>${dormantInCat} ${firstCat.toLowerCase()} haven't heard from you in 12+ months.</p><div class="contact-chips">${enrichedContacts.filter(c => c.categories && c.categories[firstCat] && c.isDormant).slice(0, 4).map(c => c.linkedInUrl ? `<a href="${c.linkedInUrl}" target="_blank" class="contact-chip">${c.name}</a>` : `<span class="contact-chip">${c.name}</span>`).join('')}</div></div>` : '';
+        }
+
+        function renderSkills() {
+            const skills = analysis.skills.map(s => s['Name'] || s['name'] || '').filter(Boolean);
+            if (skills.length) {
+                const needsCollapse = skills.length > 15;
+                document.getElementById('skillsList').innerHTML = `
+                    <div id="skillsContainer" class="skills-grid ${needsCollapse ? 'skills-collapsed' : ''}">${skills.map(s => `<span class="skill-tag">${s}</span>`).join('')}</div>
+                    ${needsCollapse ? `<button class="show-more-btn" id="skillsToggleBtn" onclick="toggleSkills()">Show all ${skills.length} skills ▼</button>` : ''}
+                `;
+            } else {
+                document.getElementById('skillsList').innerHTML = '<p style="color: var(--text-secondary);">Upload Skills.csv to see your listed skills.</p>';
+            }
+            if (analysis.topEndorsedSkills.length) {
+                new Chart(document.getElementById('endorsementChart'), { type: 'bar', data: { labels: analysis.topEndorsedSkills.map(s => s[0].substring(0, 20)), datasets: [{ data: analysis.topEndorsedSkills.map(s => s[1]), backgroundColor: '#667eea', borderRadius: 4 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+            }
+            document.querySelector('#endorsersTable tbody').innerHTML = analysis.topEndorsers.map(([name, data]) => {
+                const capitalized = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                return `<tr><td><strong>${capitalized}</strong></td><td>${data.count} (${data.skills.slice(0, 3).join(', ')}${data.skills.length > 3 ? '...' : ''})</td><td><a href="https://linkedin.com/search/results/all/?keywords=${encodeURIComponent(capitalized)}" target="_blank" class="action-btn">View</a></td></tr>`;
+            }).join('') || '<tr><td colspan="3" style="color: var(--text-secondary);">Upload Endorsement_Received_Info.csv</td></tr>';
+        }
+
+        function toggleSkills() {
+            const container = document.getElementById('skillsContainer');
+            const btn = document.getElementById('skillsToggleBtn');
+            if (container.classList.contains('skills-collapsed')) {
+                container.classList.remove('skills-collapsed');
+                container.classList.add('skills-expanded');
+                btn.textContent = 'Show less ▲';
+            } else {
+                container.classList.remove('skills-expanded');
+                container.classList.add('skills-collapsed');
+                const skillCount = analysis.skills.length;
+                btn.textContent = `Show all ${skillCount} skills ▼`;
+            }
+        }
+
+        function renderAdvocates() {
+            document.getElementById('advocateStats').innerHTML = `<div class="stat-card accent"><div class="value">${analysis.recommendations.length}</div><div class="label">Written Recommendations</div></div><div class="stat-card"><div class="value">${new Set(analysis.recommendations.map(r => r['Company'])).size}</div><div class="label">Companies Represented</div></div>`;
+            document.getElementById('recommendationsList').innerHTML = analysis.recommendations.length ? analysis.recommendations.map(r => `<div class="rec-card"><div class="header"><div><div class="name">${r['First Name'] || ''} ${r['Last Name'] || ''}</div><div class="title">${r['Job Title'] || ''} at ${r['Company'] || ''}</div></div><span class="badge badge-success">Visible</span></div><div class="text">"${(r['Text'] || '').substring(0, 400)}${(r['Text'] || '').length > 400 ? '...' : ''}"</div></div>`).join('') : '<p style="color: var(--text-secondary); padding: 20px;">Upload Recommendations_Received.csv to see your advocates.</p>';
+        }
+
+        function renderPriorities() {
+            const scored = enrichedContacts.map(c => {
+                let score = 0;
+                let matchedCat = null;
+                if (c.categories) {
+                    customCategories.forEach((cat, i) => {
+                        if (c.categories[cat.name]) {
+                            score += (30 - i * 5);
+                            if (!matchedCat) matchedCat = cat.name;
+                        }
+                    });
+                }
+                if (c.isDormant && c.messageCount > 0) score += 15;
+                if (c.endorsementCount > 0) score += 10;
+                return { ...c, score, matchedCat };
+            }).sort((a, b) => b.score - a.score);
+
+            document.querySelector('#prioritiesTable tbody').innerHTML = scored.slice(0, 10).map((c, i) => `<tr><td><span class="badge ${i < 2 ? 'badge-danger' : i < 5 ? 'badge-accent' : 'badge-neutral'}">${i + 1}</span></td><td><strong>${c.name}</strong></td><td>${c.position || 'N/A'}<br><span style="color: var(--text-secondary); font-size: 11px;">${c.company || ''}</span></td><td style="font-size: 12px;">${c.matchedCat || (c.isDormant ? 'Gone dormant' : 'Strategic')}</td><td><span class="badge badge-${c.relStrength === 'strong' ? 'success' : c.relStrength === 'warm' ? 'accent' : 'neutral'}">${c.relStrength}</span></td></tr>`).join('');
+
+            const dormantPriority = enrichedContacts.filter(c => c.isDormant && c.messageCount > 0).slice(0, 4);
+            document.getElementById('playbookCards').innerHTML = dormantPriority.map(c => `<div class="playbook-card"><div class="name">${c.name}</div><div class="role">${c.position || ''} at ${c.company || ''}</div><div class="message">"Hi ${c.name.split(' ')[0]}, hope you're doing well! It's been a while since we connected. I've been focused on [your focus] and would love to catch up. Any chance for a brief call?"</div></div>`).join('') || '<p style="color: var(--text-secondary);">Upload messages.csv to identify dormant relationships.</p>';
+        }
+
+        function renderInferences() {
+            let content = '';
+            if (analysis.inferences.length) {
+                content += '<div class="card"><div class="card-header">LinkedIn\'s Inferences About You</div><div class="card-body"><table class="data-table"><thead><tr><th>Category</th><th>Inference</th><th>Value</th></tr></thead><tbody>';
+                content += analysis.inferences.map(i => `<tr><td>${i['Category'] || ''}</td><td>${i['Type of inference'] || i['Description'] || ''}</td><td><span class="badge ${i['Inference'] === 'true' || i['Inference'] === 'Yes' ? 'badge-success' : 'badge-neutral'}">${i['Inference'] || ''}</span></td></tr>`).join('');
+                content += '</tbody></table></div></div>';
+            }
+            if (analysis.adtargeting.length && analysis.adtargeting[0]['Member Skills']) {
+                const adData = analysis.adtargeting[0];
+                const inferredSkills = (adData['Member Skills'] || '').split(';').slice(0, 50);
+                const absurdSkills = inferredSkills.filter(s => ['Nuclear Engineering', 'Agricultural Production', 'Flight Training', 'Scripture', 'Knee', 'Mosaics', 'Celestial Navigation'].some(a => s.includes(a)));
+                content += `<div class="card"><div class="card-header">Ad Targeting Data (What LinkedIn Sells)</div><div class="card-body">
+                    <div class="grid-2">
+                        <div><h4 style="font-size: 13px; margin-bottom: 8px;">Seniority</h4><span class="badge badge-${adData['Job Seniorities']?.includes('Entry') ? 'danger' : 'success'}">${adData['Job Seniorities'] || 'N/A'}</span>${adData['Job Seniorities']?.includes('Entry') ? ' <span style="color: var(--danger); font-size: 12px;">← Wrong!</span>' : ''}</div>
+                        <div><h4 style="font-size: 13px; margin-bottom: 8px;">Experience</h4><span class="badge badge-success">${adData['Years of Experience'] || 'N/A'}</span></div>
+                    </div>
+                    ${absurdSkills.length ? `<div style="margin-top: 16px;"><h4 style="font-size: 13px; margin-bottom: 8px;">🤔 Absurd Inferred Skills</h4><div class="skills-grid">${absurdSkills.map(s => `<span class="skill-tag">${s.trim()}</span>`).join('')}</div><p style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">LinkedIn infers 800+ skills for ad targeting. Many are... creative.</p></div>` : ''}
+                </div></div>`;
+            }
+            document.getElementById('inferencesContent').innerHTML = content || '<p style="color: var(--text-secondary); padding: 20px;">Upload Inferences_about_you.csv and/or Ad_Targeting.csv to see how LinkedIn perceives you.</p>';
+        }
+
+        function renderContent() {
+            if (!analysis.shares || analysis.shares.length === 0) {
+                document.getElementById('contentStats').innerHTML = '<div class="stat-card"><div class="value">—</div><div class="label">No Data</div></div>';
+                document.getElementById('contentThemes').innerHTML = '<p style="color: var(--text-secondary);">Upload Shares.csv to see your content activity.</p>';
+                document.getElementById('contentEditorial').innerHTML = '<div class="editorial-label">No Data</div><p>Upload Shares.csv from your LinkedIn export to analyze your posting patterns and thought leadership.</p>';
+                return;
+            }
+
+            const monthsSinceFirst = analysis.firstPost ? Math.max(1, Math.ceil((new Date() - analysis.firstPost) / (1000 * 60 * 60 * 24 * 30))) : 1;
+            const postsPerMonth = (analysis.totalPosts / monthsSinceFirst).toFixed(1);
+            const daysSinceLast = analysis.lastPost ? Math.floor((new Date() - analysis.lastPost) / (1000 * 60 * 60 * 24)) : 0;
+
+            document.getElementById('contentStats').innerHTML = `
+                <div class="stat-card accent"><div class="value">${analysis.totalPosts}</div><div class="label">Total Posts</div></div>
+                <div class="stat-card"><div class="value">${postsPerMonth}</div><div class="label">Posts/Month</div></div>
+                <div class="stat-card ${daysSinceLast > 30 ? 'danger' : 'success'}"><div class="value">${daysSinceLast}</div><div class="label">Days Since Last</div></div>
+                <div class="stat-card"><div class="value">${Object.keys(analysis.themeCounts).length}</div><div class="label">Themes Covered</div></div>
+            `;
+
+            const months = Object.keys(analysis.postsByMonth).sort().slice(-12);
+            if (months.length && document.getElementById('postingChart')) {
+                new Chart(document.getElementById('postingChart'), { type: 'bar', data: { labels: months.map(m => { const [y, mo] = m.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(mo)-1] + ' ' + y.slice(2); }), datasets: [{ data: months.map(m => analysis.postsByMonth[m]), backgroundColor: '#c9a227', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+            }
+
+            const sortedThemes = Object.entries(analysis.themeCounts).sort((a, b) => b[1] - a[1]);
+            document.getElementById('contentThemes').innerHTML = sortedThemes.length ? sortedThemes.map(([theme, count]) => `<div class="progress-item"><div class="label-row"><span>${theme}</span><span>${count} posts</span></div><div class="progress-bar"><div class="progress-fill" style="width: ${(count / analysis.totalPosts) * 100}%; background: var(--accent);"></div></div></div>`).join('') : '<p style="color: var(--text-secondary);">Post commentary needed to detect themes.</p>';
+
+            const topTheme = sortedThemes[0] ? sortedThemes[0][0] : 'various topics';
+            const activityLevel = postsPerMonth >= 2 ? 'active' : postsPerMonth >= 0.5 ? 'moderate' : 'light';
+            document.getElementById('contentEditorial').innerHTML = `<div class="editorial-label">Content Strategy Insight</div><p>You're a <strong>${activityLevel} content creator</strong> with ${analysis.totalPosts} posts, primarily focused on <strong>${topTheme}</strong>. ${daysSinceLast > 30 ? `It's been ${daysSinceLast} days since your last post—consider re-engaging your network with fresh insights.` : 'Your recent activity keeps you visible to your network.'} Consistent posting builds thought leadership and keeps you top-of-mind for opportunities.</p>`;
+        }
+
+        function renderContacts() {
+            const catSelect = document.getElementById('categoryFilter');
+            if (catSelect && customCategories.length && catSelect.options.length <= 5) {
+                catSelect.innerHTML = '<option value="all">All Categories</option>' +
+                    customCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('') +
+                    '<option value="endorsed">Endorsed You</option>';
+            }
+
+            const search = document.getElementById('searchInput')?.value?.toLowerCase() || '';
+            const catFilter = document.getElementById('categoryFilter')?.value || 'all';
+            const relFilter = document.getElementById('relationshipFilter')?.value || 'all';
+            let filtered = enrichedContacts;
+
+            if (catFilter === 'endorsed') filtered = filtered.filter(c => c.endorsementCount > 0);
+            else if (catFilter !== 'all') filtered = filtered.filter(c => c.categories && c.categories[catFilter]);
+
+            if (relFilter === 'dormant') filtered = filtered.filter(c => c.isDormant);
+            else if (relFilter !== 'all') filtered = filtered.filter(c => c.relStrength === relFilter);
+            if (search) filtered = filtered.filter(c => c.name.toLowerCase().includes(search) || (c.company || '').toLowerCase().includes(search) || (c.position || '').toLowerCase().includes(search));
+
+            const tagColors = ['tag-recruiter', 'tag-executive', 'tag-pe', 'tag-endorsed'];
+            document.getElementById('contactGrid').innerHTML = filtered.slice(0, 60).map(c => {
+                let tags = '';
+                if (c.categories) {
+                    Object.keys(c.categories).forEach((cat, i) => {
+                        if (c.categories[cat]) tags += `<span class="tag ${tagColors[i % tagColors.length]}">${cat}</span>`;
+                    });
+                }
+                if (c.isDormant) tags += '<span class="tag tag-dormant">Dormant</span>';
+                if (c.endorsementCount > 0) tags += '<span class="tag tag-endorsed">Endorsed</span>';
+                const nameHtml = c.linkedInUrl ? `<a href="${c.linkedInUrl}" target="_blank" class="name">${c.name}</a>` : `<div class="name">${c.name}</div>`;
+                const linkIcon = c.linkedInUrl ? `<a href="${c.linkedInUrl}" target="_blank" class="linkedin-link" title="View LinkedIn Profile">🔗</a>` : '';
+                return `<div class="contact-card">${linkIcon}${nameHtml}<div class="position">${c.position || 'No title'}</div><div class="company">${c.company || ''}</div><div class="tags">${tags}</div><div class="meta"><span>${c.messageCount} msgs</span><span>${c.relStrength}</span>${c.endorsementCount ? `<span>${c.endorsementCount} endorsements</span>` : ''}</div></div>`;
+            }).join('') || '<p style="padding: 40px; text-align: center; color: var(--text-secondary);">No contacts match filters.</p>';
+        }
+
+        document.getElementById('searchInput')?.addEventListener('input', renderContacts);
+        document.getElementById('categoryFilter')?.addEventListener('change', renderContacts);
+        document.getElementById('relationshipFilter')?.addEventListener('change', renderContacts);
+        document.getElementById('exportBtn')?.addEventListener('click', () => {
+            const catHeaders = customCategories.map(c => c.name);
+            const headers = ['Name', 'Position', 'Company', 'Email', 'Messages', 'Strength', ...catHeaders, 'Dormant', 'Endorsements'];
+            const csv = [headers.join(','), ...enrichedContacts.map(c => {
+                const catValues = customCategories.map(cat => c.categories && c.categories[cat.name] ? 'Y' : '');
+                return [c.name, c.position, c.company, c.email, c.messageCount, c.relStrength, ...catValues, c.isDormant ? 'Y' : '', c.endorsementCount].map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',');
+            })].join('\n');
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'LiVE_Export.csv'; a.click();
+        });
+    </script>
+</body>
+</html>
