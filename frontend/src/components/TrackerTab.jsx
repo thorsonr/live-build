@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { DndContext, useDraggable, useDroppable, pointerWithin } from '@dnd-kit/core'
 import { api } from '../lib/api'
 
 const STATUSES = [
@@ -10,14 +11,215 @@ const STATUSES = [
   { id: 'parked', label: 'Parked', color: 'bg-amber-100 text-amber-700' },
 ]
 
+const LOG_TYPES = ['Email', 'Call', 'Text', 'In-Person', 'LinkedIn', 'Other']
+
+function DroppableColumn({ id, children, isOver }) {
+  const { setNodeRef } = useDroppable({ id })
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-h-[100px] space-y-2 rounded-lg transition-all ${
+        isOver ? 'ring-2 ring-live-accent ring-dashed bg-live-accent/5' : ''
+      }`}
+    >
+      {children}
+    </div>
+  )
+}
+
+function DraggableCard({ id, children }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
+  const style = transform
+    ? { transform: `translate(${transform.x}px, ${transform.y}px)`, opacity: isDragging ? 0.5 : 1 }
+    : undefined
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className="cursor-grab active:cursor-grabbing"
+    >
+      {children}
+    </div>
+  )
+}
+
+function TrackerDetailPanel({ entry, onClose, onUpdate }) {
+  const [status, setStatus] = useState(entry.status)
+  const [notes, setNotes] = useState(entry.notes || '')
+  const [engagementLog, setEngagementLog] = useState(entry.engagement_log || [])
+  const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0])
+  const [logType, setLogType] = useState('Email')
+  const debounceRef = useRef(null)
+
+  // Auto-save notes with debounce
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      if (notes !== (entry.notes || '')) {
+        try {
+          const data = await api.updateTracker(entry.id, { notes })
+          onUpdate(data.entry)
+        } catch (err) {
+          console.error('Failed to save notes:', err)
+        }
+      }
+    }, 1000)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [notes])
+
+  const handleStatusChange = async (newStatus) => {
+    setStatus(newStatus)
+    try {
+      const data = await api.updateTracker(entry.id, { status: newStatus })
+      onUpdate(data.entry)
+    } catch (err) {
+      console.error('Failed to update status:', err)
+      setStatus(entry.status)
+    }
+  }
+
+  const handleLogEngagement = async () => {
+    if (!logDate) return
+    const newLog = [...engagementLog, { date: logDate, type: logType }]
+    setEngagementLog(newLog)
+    try {
+      const data = await api.updateTracker(entry.id, { engagement_log: newLog })
+      onUpdate(data.entry)
+    } catch (err) {
+      console.error('Failed to log engagement:', err)
+      setEngagementLog(engagementLog)
+    }
+  }
+
+  const sortedLog = [...engagementLog].sort((a, b) => b.date.localeCompare(a.date))
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr + 'T00:00:00')
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  const typeBadgeColor = (type) => {
+    const colors = {
+      'Email': 'bg-blue-100 text-blue-700',
+      'Call': 'bg-green-100 text-green-700',
+      'Text': 'bg-purple-100 text-purple-700',
+      'In-Person': 'bg-amber-100 text-amber-700',
+      'LinkedIn': 'bg-indigo-100 text-indigo-700',
+      'Other': 'bg-gray-100 text-gray-700',
+    }
+    return colors[type] || colors['Other']
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-live-bg overflow-y-auto shadow-2xl">
+        {/* Header */}
+        <div className="sticky top-0 bg-live-bg border-b border-live-border px-6 py-4 flex justify-between items-start z-10">
+          <div>
+            <h2 className="font-display text-lg font-semibold text-live-text">{entry.contact_name}</h2>
+            {(entry.contact_position || entry.contact_company) && (
+              <p className="text-xs text-live-text-secondary mt-0.5">
+                {entry.contact_position}{entry.contact_company ? ` @ ${entry.contact_company}` : ''}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-live-text-secondary hover:text-live-text text-xl leading-none p-1"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div className="px-6 py-6 space-y-6">
+          {/* Status */}
+          <div>
+            <label className="label">Status</label>
+            <select
+              className="input w-full"
+              value={status}
+              onChange={(e) => handleStatusChange(e.target.value)}
+            >
+              {STATUSES.map(s => (
+                <option key={s.id} value={s.id}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Log Engagement */}
+          <div>
+            <label className="label">Log Engagement</label>
+            <div className="flex gap-2 items-end">
+              <input
+                type="date"
+                className="input flex-1 text-sm"
+                value={logDate}
+                onChange={(e) => setLogDate(e.target.value)}
+              />
+              <select
+                className="input w-auto text-sm"
+                value={logType}
+                onChange={(e) => setLogType(e.target.value)}
+              >
+                {LOG_TYPES.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <button
+                onClick={handleLogEngagement}
+                className="btn btn-primary text-sm px-3 py-2"
+              >
+                Log
+              </button>
+            </div>
+          </div>
+
+          {/* Engagement History */}
+          {sortedLog.length > 0 && (
+            <div>
+              <label className="label">Engagement History</label>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {sortedLog.map((entry, i) => (
+                  <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-live-bg-warm">
+                    <span className="text-xs text-live-text-secondary">{formatDate(entry.date)}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeBadgeColor(entry.type)}`}>
+                      {entry.type}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          <div>
+            <label className="label">Notes</label>
+            <textarea
+              className="input w-full min-h-[100px] resize-y text-sm"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add notes about this contact..."
+            />
+            <p className="text-xs text-live-text-secondary mt-1">Auto-saves after 1 second</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function TrackerTab({ sampleMode = false }) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
-  const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ contact_name: '', contact_company: '', contact_position: '', notes: '' })
-  const [editForm, setEditForm] = useState({ status: '', notes: '' })
   const [viewMode, setViewMode] = useState('list') // 'list' | 'board'
+  const [selectedEntry, setSelectedEntry] = useState(null)
+  const [activeDropId, setActiveDropId] = useState(null)
 
   useEffect(() => {
     if (!sampleMode) loadEntries()
@@ -47,20 +249,11 @@ export default function TrackerTab({ sampleMode = false }) {
     }
   }
 
-  const handleUpdate = async (id) => {
-    try {
-      const data = await api.updateTracker(id, editForm)
-      setEntries(prev => prev.map(e => e.id === id ? data.entry : e))
-      setEditingId(null)
-    } catch (err) {
-      console.error('Failed to update:', err)
-    }
-  }
-
   const handleDelete = async (id) => {
     try {
       await api.removeFromTracker(id)
       setEntries(prev => prev.filter(e => e.id !== id))
+      if (selectedEntry?.id === id) setSelectedEntry(null)
     } catch (err) {
       console.error('Failed to delete:', err)
     }
@@ -75,9 +268,35 @@ export default function TrackerTab({ sampleMode = false }) {
     }
   }
 
-  const startEdit = (entry) => {
-    setEditingId(entry.id)
-    setEditForm({ status: entry.status, notes: entry.notes || '' })
+  const handleEntryUpdate = (updatedEntry) => {
+    setEntries(prev => prev.map(e => e.id === updatedEntry.id ? updatedEntry : e))
+    setSelectedEntry(updatedEntry)
+  }
+
+  const handleDragEnd = async (event) => {
+    setActiveDropId(null)
+    const { active, over } = event
+    if (!over) return
+
+    const entryId = active.id
+    const newStatus = over.id
+    const entry = entries.find(e => e.id === entryId)
+    if (!entry || entry.status === newStatus) return
+
+    // Optimistic update
+    const prevEntries = [...entries]
+    setEntries(prev => prev.map(e => e.id === entryId ? { ...e, status: newStatus } : e))
+
+    try {
+      await api.updateTracker(entryId, { status: newStatus })
+    } catch (err) {
+      console.error('Failed to update status:', err)
+      setEntries(prevEntries)
+    }
+  }
+
+  const handleDragOver = (event) => {
+    setActiveDropId(event.over?.id || null)
   }
 
   const statusConfig = (statusId) => STATUSES.find(s => s.id === statusId) || STATUSES[0]
@@ -200,113 +419,106 @@ export default function TrackerTab({ sampleMode = false }) {
         /* List View */
         <div className="space-y-3">
           {entries.map(entry => (
-            <div key={entry.id} className="card">
+            <div
+              key={entry.id}
+              className="card cursor-pointer hover:border-live-accent transition-colors"
+              onClick={() => setSelectedEntry(entry)}
+            >
               <div className="card-body">
-                {editingId === entry.id ? (
-                  /* Edit mode */
-                  <div>
-                    <div className="flex items-center gap-3 mb-3">
-                      <p className="font-semibold text-sm">{entry.contact_name}</p>
-                      <select
-                        className="input text-xs py-1 px-2 w-auto"
-                        value={editForm.status}
-                        onChange={(e) => setEditForm(f => ({ ...f, status: e.target.value }))}
-                      >
-                        {STATUSES.map(s => (
-                          <option key={s.id} value={s.id}>{s.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <textarea
-                      className="input w-full mb-3 resize-y text-sm"
-                      rows={2}
-                      placeholder="Notes..."
-                      value={editForm.notes}
-                      onChange={(e) => setEditForm(f => ({ ...f, notes: e.target.value }))}
-                    />
-                    <div className="flex gap-2">
-                      <button onClick={() => handleUpdate(entry.id)} className="text-xs px-3 py-1 bg-live-accent text-[#1a1a2e] rounded-lg font-medium">Save</button>
-                      <button onClick={() => setEditingId(null)} className="text-xs px-3 py-1 border border-live-border rounded-lg">Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                  /* Display mode */
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-sm text-live-text">{entry.contact_name}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusConfig(entry.status).color}`}>
-                          {statusConfig(entry.status).label}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-semibold text-sm text-live-text">{entry.contact_name}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusConfig(entry.status).color}`}>
+                        {statusConfig(entry.status).label}
+                      </span>
+                      {(entry.engagement_log || []).length > 0 && (
+                        <span className="text-xs text-live-text-secondary">
+                          {(entry.engagement_log || []).length} log{(entry.engagement_log || []).length !== 1 ? 's' : ''}
                         </span>
-                      </div>
-                      {(entry.contact_position || entry.contact_company) && (
-                        <p className="text-xs text-live-text-secondary">
-                          {entry.contact_position}{entry.contact_company ? ` at ${entry.contact_company}` : ''}
-                        </p>
                       )}
-                      {entry.notes && (
-                        <p className="text-xs text-live-text-secondary mt-1 line-clamp-2">{entry.notes}</p>
-                      )}
-                      <p className="text-xs text-live-text-secondary mt-1 opacity-60">
-                        Last action: {formatDate(entry.last_action_at)}
+                    </div>
+                    {(entry.contact_position || entry.contact_company) && (
+                      <p className="text-xs text-live-text-secondary">
+                        {entry.contact_position}{entry.contact_company ? ` at ${entry.contact_company}` : ''}
                       </p>
-                    </div>
-                    <div className="flex items-center gap-1 ml-3">
-                      <button
-                        onClick={() => startEdit(entry)}
-                        className="text-xs px-2 py-1 border border-live-border rounded hover:bg-live-bg-warm transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(entry.id)}
-                        className="text-xs px-2 py-1 border border-live-border rounded hover:bg-red-50 hover:border-red-200 text-live-text-secondary hover:text-red-600 transition-colors"
-                      >
-                        &times;
-                      </button>
-                    </div>
+                    )}
+                    {entry.notes && (
+                      <p className="text-xs text-live-text-secondary mt-1 line-clamp-2">{entry.notes}</p>
+                    )}
+                    <p className="text-xs text-live-text-secondary mt-1 opacity-60">
+                      Last action: {formatDate(entry.last_action_at)}
+                    </p>
                   </div>
-                )}
+                  <div className="flex items-center gap-1 ml-3" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => handleDelete(entry.id)}
+                      className="text-xs px-2 py-1 border border-live-border rounded hover:bg-red-50 hover:border-red-200 text-live-text-secondary hover:text-red-600 transition-colors"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        /* Board View */
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {STATUSES.map(status => (
-            <div key={status.id}>
-              <div className="text-xs font-semibold uppercase text-live-text-secondary mb-2 flex items-center gap-1">
-                <span className={`inline-block w-2 h-2 rounded-full ${status.color.split(' ')[0]}`}></span>
-                {status.label} ({grouped[status.id]?.length || 0})
-              </div>
-              <div className="space-y-2 min-h-[100px]">
-                {(grouped[status.id] || []).map(entry => (
-                  <div key={entry.id} className="card">
-                    <div className="card-body py-2 px-3">
-                      <p className="text-xs font-medium text-live-text truncate">{entry.contact_name}</p>
-                      {entry.contact_company && (
-                        <p className="text-xs text-live-text-secondary truncate">{entry.contact_company}</p>
-                      )}
-                      <div className="flex gap-1 mt-1">
-                        {STATUSES.filter(s => s.id !== entry.status).slice(0, 2).map(s => (
-                          <button
-                            key={s.id}
-                            onClick={() => handleStatusChange(entry.id, s.id)}
-                            className="text-[10px] px-1.5 py-0.5 border border-live-border rounded hover:bg-live-bg-warm transition-colors"
-                            title={`Move to ${s.label}`}
-                          >
-                            {s.label}
-                          </button>
-                        ))}
+        /* Board View with Drag and Drop */
+        <DndContext
+          collisionDetection={pointerWithin}
+          onDragEnd={handleDragEnd}
+          onDragOver={handleDragOver}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {STATUSES.map(status => (
+              <div key={status.id}>
+                <div className="text-xs font-semibold uppercase text-live-text-secondary mb-2 flex items-center gap-1">
+                  <span className={`inline-block w-2 h-2 rounded-full ${status.color.split(' ')[0]}`}></span>
+                  {status.label} ({grouped[status.id]?.length || 0})
+                </div>
+                <DroppableColumn id={status.id} isOver={activeDropId === status.id}>
+                  {(grouped[status.id] || []).map(entry => (
+                    <DraggableCard key={entry.id} id={entry.id}>
+                      <div
+                        className="card cursor-pointer hover:border-live-accent transition-colors"
+                        onClick={() => setSelectedEntry(entry)}
+                      >
+                        <div className="card-body py-2 px-3">
+                          <p className="text-xs font-medium text-live-text truncate">{entry.contact_name}</p>
+                          {entry.contact_company && (
+                            <p className="text-xs text-live-text-secondary truncate">{entry.contact_company}</p>
+                          )}
+                          <div className="flex gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
+                            {STATUSES.filter(s => s.id !== entry.status).slice(0, 2).map(s => (
+                              <button
+                                key={s.id}
+                                onClick={() => handleStatusChange(entry.id, s.id)}
+                                className="text-[10px] px-1.5 py-0.5 border border-live-border rounded hover:bg-live-bg-warm transition-colors"
+                                title={`Move to ${s.label}`}
+                              >
+                                {s.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    </DraggableCard>
+                  ))}
+                </DroppableColumn>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </DndContext>
+      )}
+
+      {/* Detail Panel */}
+      {selectedEntry && (
+        <TrackerDetailPanel
+          entry={selectedEntry}
+          onClose={() => setSelectedEntry(null)}
+          onUpdate={handleEntryUpdate}
+        />
       )}
     </div>
   )

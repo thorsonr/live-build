@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { api } from '../lib/api'
 
-export default function MessageGenerator({ data, settings, sampleMode = false, sampleMessages = null }) {
+export default function MessageGenerator({ data, settings, profile, sampleMode = false, sampleMessages = null }) {
   const [mode, setMode] = useState('recommended') // 'recommended' | 'other'
   const [selectedContact, setSelectedContact] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -13,6 +13,7 @@ export default function MessageGenerator({ data, settings, sampleMode = false, s
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(null)
+  const [trackerAdded, setTrackerAdded] = useState({})
   const dropdownRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -26,6 +27,21 @@ export default function MessageGenerator({ data, settings, sampleMode = false, s
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
+
+  const handleAddToTracker = async (contact, e) => {
+    if (e) e.stopPropagation()
+    if (!settings?.show_tracker) return
+    try {
+      await api.addToTracker({
+        contact_name: contact.name,
+        contact_company: contact.company || '',
+        contact_position: contact.position || '',
+      })
+      setTrackerAdded(prev => ({ ...prev, [contact.name]: true }))
+    } catch (err) {
+      console.error('Failed to add to tracker:', err)
+    }
+  }
 
   // Build recommended contacts from AI priorities + playbooks
   const recommendedContacts = useMemo(() => {
@@ -219,7 +235,8 @@ export default function MessageGenerator({ data, settings, sampleMode = false, s
     setMessages(null)
 
     try {
-      const result = await api.generateOutreachMessages({ contact: selectedContact, userContext, tone, length })
+      const senderName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ')
+      const result = await api.generateOutreachMessages({ contact: selectedContact, userContext, tone, length, senderName })
       setMessages(result.messages)
     } catch (err) {
       setError(err.message || 'Failed to generate messages. Please try again.')
@@ -273,23 +290,36 @@ export default function MessageGenerator({ data, settings, sampleMode = false, s
               recommendedContacts.length > 0 ? (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {recommendedContacts.map((c, i) => (
-                    <button
+                    <div
                       key={i}
                       onClick={() => selectContact(c)}
-                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                      className={`w-full text-left p-3 rounded-lg border transition-colors cursor-pointer ${
                         selectedContact?.name === c.name
                           ? 'border-live-accent bg-live-accent-soft'
                           : 'border-live-border hover:bg-live-bg-warm'
                       }`}
                     >
-                      <div className="font-medium text-sm text-live-text">{c.name}</div>
-                      <div className="text-xs text-live-text-secondary">
-                        {c.position}{c.company ? ` at ${c.company}` : ''}
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium text-sm text-live-text">{c.name}</div>
+                          <div className="text-xs text-live-text-secondary">
+                            {c.position}{c.company ? ` at ${c.company}` : ''}
+                          </div>
+                          {c.whyPrioritized && (
+                            <div className="text-xs text-live-accent mt-1">{c.whyPrioritized}</div>
+                          )}
+                        </div>
+                        {settings?.show_tracker && (
+                          <button
+                            onClick={(e) => handleAddToTracker(c, e)}
+                            disabled={trackerAdded[c.name]}
+                            className="flex-shrink-0 text-xs px-2 py-1 border border-live-border rounded hover:bg-live-bg-warm disabled:opacity-50 transition-colors ml-2"
+                          >
+                            {trackerAdded[c.name] ? 'Added' : '+ Track'}
+                          </button>
+                        )}
                       </div>
-                      {c.whyPrioritized && (
-                        <div className="text-xs text-live-accent mt-1">{c.whyPrioritized}</div>
-                      )}
-                    </button>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -360,12 +390,23 @@ export default function MessageGenerator({ data, settings, sampleMode = false, s
                       <p className="text-xs text-live-accent mt-1">{selectedContact.contextHook}</p>
                     )}
                   </div>
-                  <button
-                    onClick={() => { setSelectedContact(null); setMessages(null) }}
-                    className="text-live-text-secondary hover:text-live-text text-sm leading-none p-1"
-                  >
-                    &times;
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {settings?.show_tracker && (
+                      <button
+                        onClick={() => handleAddToTracker(selectedContact)}
+                        disabled={trackerAdded[selectedContact.name]}
+                        className="text-xs px-2 py-1 border border-live-border rounded hover:bg-live-bg-warm disabled:opacity-50 transition-colors"
+                      >
+                        {trackerAdded[selectedContact.name] ? 'Added' : '+ Track'}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { setSelectedContact(null); setMessages(null) }}
+                      className="text-live-text-secondary hover:text-live-text text-sm leading-none p-1"
+                    >
+                      &times;
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

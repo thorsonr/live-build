@@ -6,7 +6,7 @@ import { useData } from '../lib/DataContext'
 import { api } from '../lib/api'
 import { prepareDataForAPI } from '../lib/linkedinParser'
 
-export default function Dashboard({ user, settings }) {
+export default function Dashboard({ user, settings, profile }) {
   const { data, setData, syncMessage, cloudLoading, loadFromCloud } = useData()
   const [activeSection, setActiveSection] = useState('summary')
   const [activeSubTab, setActiveSubTab] = useState(null)
@@ -76,6 +76,23 @@ export default function Dashboard({ user, settings }) {
     if (result?.contacts?.length) {
       api.importData(result.contacts).catch(err => {
         console.warn('Cloud sync failed:', err.message)
+      })
+    }
+
+    // Save supplementary analytics (skills, endorsements, recommendations,
+    // shares, inferences, adtargeting) so they persist across sessions
+    if (result?.analytics) {
+      const { skills, topEndorsedSkills, topEndorsers, endorsementCount,
+        recommendationCount, recommendations, inferences, adtargeting,
+        shares, postsByMonth, totalPosts, firstPost, lastPost,
+        themeCounts, messageCount } = result.analytics
+      api.saveAnalyticsCache({
+        skills, topEndorsedSkills, topEndorsers, endorsementCount,
+        recommendationCount, recommendations, inferences, adtargeting,
+        shares, postsByMonth, totalPosts, firstPost, lastPost,
+        themeCounts, messageCount,
+      }).catch(err => {
+        console.warn('Analytics cache sync failed:', err.message)
       })
     }
   }
@@ -273,6 +290,7 @@ export default function Dashboard({ user, settings }) {
             activeTab={activeTab}
             user={user}
             settings={settings}
+            profile={profile}
             onExportCSV={handleExportCSV}
             onNavigate={handleNavigate}
           />

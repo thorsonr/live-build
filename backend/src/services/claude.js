@@ -338,7 +338,7 @@ Be specific and actionable. Reference actual contacts where relevant.`
  * Generate two LinkedIn outreach message variants for a contact.
  * Uses Haiku for fast, cost-effective generation.
  */
-export async function generateOutreachMessages({ contact, userContext, tone = 'professional', length = 'medium', userId }) {
+export async function generateOutreachMessages({ contact, userContext, tone = 'professional', length = 'medium', senderName = '', userId }) {
   const aiConfig = await getModelForFeature(userId, 'outreach_message')
 
   if (!aiConfig.apiKey) {
@@ -350,6 +350,9 @@ export async function generateOutreachMessages({ contact, userContext, tone = 'p
   const lengthGuide = { short: '~50 words', medium: '~100 words', long: '~200 words' }
   const lengthText = lengthGuide[length] || lengthGuide.medium
 
+  const senderLine = senderName ? `\nSENDER NAME: ${senderName}` : ''
+  const signRule = senderName ? `\n- Sign each message with the sender's name: ${senderName}` : ''
+
   const prompt = `You are an expert at writing LinkedIn outreach messages that get responses. Generate exactly 2 message variants for the following contact.
 
 CONTACT:
@@ -358,7 +361,7 @@ Position: ${contact.position || 'Unknown'}
 Company: ${contact.company || 'Unknown'}
 Relationship: ${contact.relationship || 'Unknown'}
 ${contact.whyPrioritized ? `Why prioritized: ${contact.whyPrioritized}` : ''}
-${contact.contextHook ? `Context: ${contact.contextHook}` : ''}
+${contact.contextHook ? `Context: ${contact.contextHook}` : ''}${senderLine}
 
 USER'S GOAL:
 ${userContext || 'Reconnect and explore mutual opportunities'}
@@ -374,7 +377,7 @@ RULES:
 - Match the requested length: approximately ${lengthText}
 - Reference specific details about the contact when possible
 - End each with a clear, low-pressure call to action
-- Do NOT use generic templates — make each feel personal
+- Do NOT use generic templates — make each feel personal${signRule}
 
 Respond with ONLY valid JSON in this exact format:
 {

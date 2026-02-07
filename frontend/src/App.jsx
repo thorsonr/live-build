@@ -36,6 +36,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState(null)
+  const [profile, setProfile] = useState(null)
 
   useEffect(() => {
     // Check current session
@@ -47,17 +48,20 @@ function App() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      if (!session?.user) setSettings(null)
+      if (!session?.user) { setSettings(null); setProfile(null) }
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  // Fetch settings when user logs in
+  // Fetch settings and profile when user logs in
   useEffect(() => {
     if (user) {
       api.getSettings()
         .then(s => setSettings(s))
+        .catch(() => {})
+      api.me()
+        .then(data => setProfile(data.profile || null))
         .catch(() => {})
     }
   }, [user])
@@ -83,7 +87,7 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute user={user}>
-              <Dashboard user={user} settings={settings} />
+              <Dashboard user={user} settings={settings} profile={profile} />
             </ProtectedRoute>
           }
         />

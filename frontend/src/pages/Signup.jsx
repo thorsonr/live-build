@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 export default function Signup() {
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [inviteCode, setInviteCode] = useState('')
@@ -30,6 +32,8 @@ export default function Signup() {
         options: {
           data: {
             invite_code: inviteCode,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
           },
         },
       })
@@ -110,6 +114,28 @@ export default function Signup() {
               <p className="mt-1 text-xs text-live-text-secondary">
                 Don't have a code? <a href="mailto:hello@live-pro.com" className="text-live-info hover:underline">Request access</a>
               </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">First Name</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name"
+                />
+              </div>
+              <div>
+                <label className="label">Last Name</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last name"
+                />
+              </div>
             </div>
             <div>
               <label className="label">Email</label>

@@ -76,7 +76,7 @@ function SampleCTAModal({ onClose }) {
   )
 }
 
-export default function NetworkAnalytics({ data, activeTab, user, settings, onExportCSV, sampleMode = false, sampleMessages = null, onNavigate }) {
+export default function NetworkAnalytics({ data, activeTab, user, settings, profile, onExportCSV, sampleMode = false, sampleMessages = null, onNavigate }) {
   const { contacts, analytics, aiAnalysis } = data
   const [selectedContact, setSelectedContact] = useState(null)
   const [showStrategy, setShowStrategy] = useState(false)
@@ -111,6 +111,7 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, onEx
         <MessageGenerator
           data={data}
           settings={settings}
+          profile={profile}
           sampleMode={sampleMode}
           sampleMessages={sampleMessages}
         />

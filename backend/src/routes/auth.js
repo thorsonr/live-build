@@ -29,7 +29,7 @@ function sanitizeSearch(input) {
 // Sign up
 router.post('/signup', async (req, res, next) => {
   try {
-    const { email, password, invite_code } = req.body
+    const { email, password, invite_code, first_name, last_name } = req.body
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' })
@@ -78,6 +78,18 @@ router.post('/signup', async (req, res, next) => {
 
     if (authError) {
       return res.status(400).json({ error: authError.message })
+    }
+
+    // Save first/last name to users table
+    if (authData.user?.id && (first_name || last_name)) {
+      await supabaseAdmin
+        .from('users')
+        .upsert({
+          id: authData.user.id,
+          email,
+          first_name: first_name?.trim().slice(0, 100) || null,
+          last_name: last_name?.trim().slice(0, 100) || null,
+        }, { onConflict: 'id' })
     }
 
     // Atomically redeem invite code via RPC (prevents race condition)
@@ -167,7 +179,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
   try {
     const { data: userData, error } = await supabaseAdmin
       .from('users')
-      .select('id, email, name, storage_mode, subscription_status, preferred_model, is_admin, created_at')
+      .select('id, email, name, first_name, last_name, storage_mode, subscription_status, preferred_model, is_admin, created_at')
       .eq('id', req.user.id)
       .single()
 

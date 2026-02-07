@@ -238,6 +238,81 @@ router.delete('/all', requireAuth, async (req, res, next) => {
 })
 
 // =============================================
+// ANALYTICS CACHE — persist supplementary data
+// (skills, endorsements, recommendations, shares,
+//  inferences, adtargeting) so reload doesn't lose them
+// =============================================
+
+// Save analytics cache
+router.post('/analytics-cache', requireAuth, async (req, res, next) => {
+  try {
+    const { analytics } = req.body
+    const userId = req.user.id
+
+    if (!analytics || typeof analytics !== 'object') {
+      return res.status(400).json({ error: 'Analytics object required' })
+    }
+
+    // Delete any existing analytics cache for this user
+    await supabaseAdmin
+      .from('ai_insights')
+      .delete()
+      .eq('user_id', userId)
+      .eq('insight_type', 'analytics_cache')
+
+    // Insert new cache
+    const { error } = await supabaseAdmin
+      .from('ai_insights')
+      .insert({
+        user_id: userId,
+        insight_type: 'analytics_cache',
+        content: JSON.stringify(analytics),
+        metadata: { cached_at: new Date().toISOString() },
+      })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({ success: true })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Get analytics cache
+router.get('/analytics-cache', requireAuth, async (req, res, next) => {
+  try {
+    const { data: row, error } = await supabaseAdmin
+      .from('ai_insights')
+      .select('content')
+      .eq('user_id', req.user.id)
+      .eq('insight_type', 'analytics_cache')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (error && error.code === 'PGRST116') {
+      return res.json({ analytics: null })
+    }
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    let analytics = null
+    if (row?.content) {
+      analytics = typeof row.content === 'string'
+        ? JSON.parse(row.content)
+        : row.content
+    }
+
+    res.json({ analytics })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// =============================================
 // ENGAGEMENT TRACKER ENDPOINTS
 // =============================================
 
@@ -312,7 +387,7 @@ router.post('/tracker', requireAuth, requireTracker, async (req, res, next) => {
 router.patch('/tracker/:id', requireAuth, requireTracker, async (req, res, next) => {
   try {
     const { id } = req.params
-    const { status, notes, contact_name, contact_company, contact_position } = req.body
+    const { status, notes, contact_name, contact_company, contact_position, engagement_log } = req.body
     const updates = { last_action_at: new Date().toISOString() }
 
     const validStatuses = ['identified', 'contacted', 'replied', 'meeting', 'closed', 'parked']
@@ -323,6 +398,25 @@ router.patch('/tracker/:id', requireAuth, requireTracker, async (req, res, next)
     if (contact_name) updates.contact_name = contact_name
     if (contact_company !== undefined) updates.contact_company = contact_company
     if (contact_position !== undefined) updates.contact_position = contact_position
+
+    // Validate and update engagement log
+    if (engagement_log !== undefined) {
+      const validTypes = ['Email', 'Call', 'Text', 'In-Person', 'LinkedIn', 'Other']
+      if (!Array.isArray(engagement_log)) {
+        return res.status(400).json({ error: 'engagement_log must be an array' })
+      }
+      for (const entry of engagement_log) {
+        if (!entry.date || !entry.type || !validTypes.includes(entry.type)) {
+          return res.status(400).json({ error: 'Each log entry requires a date and valid type' })
+        }
+      }
+      updates.engagement_log = engagement_log
+      // Update last_action_at to most recent log entry
+      if (engagement_log.length > 0) {
+        const sorted = [...engagement_log].sort((a, b) => b.date.localeCompare(a.date))
+        updates.last_action_at = sorted[0].date
+      }
+    }
 
     const { data: entry, error } = await supabaseAdmin
       .from('engagement_tracker')

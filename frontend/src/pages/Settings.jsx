@@ -40,6 +40,10 @@ export default function Settings({ user, settings, onSettingsChange }) {
   const [archiving, setArchiving] = useState(false)
   const [showAllArchives, setShowAllArchives] = useState(false)
   const [quota, setQuota] = useState(null)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileMessage, setProfileMessage] = useState('')
 
   const tier = settings?.tier || 'trial'
   const showByok = settings?.show_byok !== false
@@ -53,12 +57,34 @@ export default function Settings({ user, settings, onSettingsChange }) {
       if (onSettingsChange) onSettingsChange(s)
     }).catch(() => {})
 
+    api.me().then(data => {
+      const p = data.profile
+      if (p) {
+        setFirstName(p.first_name || '')
+        setLastName(p.last_name || '')
+      }
+    }).catch(() => {})
+
     api.getArchives().then(res => {
       setArchives(res.archives || [])
     }).catch(() => {}).finally(() => setArchivesLoading(false))
 
     api.getUsageQuota().then(q => setQuota(q)).catch(() => {})
   }, [])
+
+  const handleSaveProfile = async () => {
+    setProfileSaving(true)
+    setProfileMessage('')
+    try {
+      await api.updateSettings({ first_name: firstName, last_name: lastName })
+      setProfileMessage('Profile saved')
+      setTimeout(() => setProfileMessage(''), 3000)
+    } catch (err) {
+      setProfileMessage(err.message || 'Failed to save profile')
+    } finally {
+      setProfileSaving(false)
+    }
+  }
 
   const handleSaveApiKey = async () => {
     setSaving(true)
@@ -212,6 +238,50 @@ export default function Settings({ user, settings, onSettingsChange }) {
               Your free trial has ended. Upgrade to Pro or add your own API key to continue.
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Profile */}
+      <div className="card mb-6">
+        <div className="card-header">Profile</div>
+        <div className="card-body space-y-4">
+          <p className="text-sm text-live-text-secondary">
+            Your name is used to sign AI-generated outreach messages.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">First Name</label>
+              <input
+                type="text"
+                className="input"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="First name"
+              />
+            </div>
+            <div>
+              <label className="label">Last Name</label>
+              <input
+                type="text"
+                className="input"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Last name"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSaveProfile}
+              disabled={profileSaving}
+              className="btn btn-primary text-sm"
+            >
+              {profileSaving ? 'Saving...' : 'Save'}
+            </button>
+            {profileMessage && (
+              <span className="text-sm text-live-success">{profileMessage}</span>
+            )}
+          </div>
         </div>
       </div>
 

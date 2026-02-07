@@ -232,7 +232,7 @@ router.post('/chat', requireAuth, async (req, res, next) => {
 // Generate outreach messages (2 variants)
 router.post('/outreach-messages', requireAuth, async (req, res, next) => {
   try {
-    const { contact, userContext, tone, length } = req.body
+    const { contact, userContext, tone, length, senderName } = req.body
     const userId = req.user.id
 
     if (!contact || !contact.name) {
@@ -264,6 +264,7 @@ router.post('/outreach-messages', requireAuth, async (req, res, next) => {
       userContext: userContext || '',
       tone: tone || 'professional',
       length: length || 'medium',
+      senderName: senderName || '',
       userId,
     })
 

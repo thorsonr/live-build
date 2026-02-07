@@ -80,8 +80,15 @@ router.get('/quota', requireAuth, async (req, res, next) => {
 // Update settings
 router.patch('/', requireAuth, async (req, res, next) => {
   try {
-    const { storage_mode, api_key, preferred_model } = req.body
+    const { storage_mode, api_key, preferred_model, first_name, last_name } = req.body
     const updates = {}
+
+    if (first_name !== undefined) {
+      updates.first_name = first_name ? first_name.trim().slice(0, 100) : null
+    }
+    if (last_name !== undefined) {
+      updates.last_name = last_name ? last_name.trim().slice(0, 100) : null
+    }
 
     if (storage_mode && ['cloud', 'local'].includes(storage_mode)) {
       updates.storage_mode = storage_mode
