@@ -670,17 +670,25 @@ function RelationshipsTab({ analytics, contacts, aiScreen }) {
         <div className="card">
           <div className="card-header">Relationship Strength</div>
           <div className="card-body">
-            <div className="h-64"><canvas ref={relationshipChartRef}></canvas></div>
+            <p className="text-xs text-live-text-secondary mb-4">
+              Based on your messaging history. <strong>Strong</strong> = messaged in the last 6 months.
+              {' '}<strong>Warm</strong> = messaged, but not recently.
+              {' '}<strong>Cold</strong> = connected but never messaged.
+            </p>
+            <div className="h-56"><canvas ref={relationshipChartRef}></canvas></div>
           </div>
         </div>
         <div className="card">
           <div className="card-header">Dormancy Analysis</div>
           <div className="card-body">
+            <p className="text-xs text-live-text-secondary mb-4">
+              Dormant connections haven't had any message exchange with you in 12+ months. These are people who already know you — reactivation is often easier than cold outreach.
+            </p>
             {firstCat && (
               <div className="mb-4">
                 <div className="flex justify-between text-sm mb-1">
                   <span>Dormant {firstCat}</span>
-                  <span className="text-live-danger">{dormantInCat}</span>
+                  <span className="text-live-danger">{dormantInCat} <span className="text-live-text-secondary text-xs">of {catTotal}</span></span>
                 </div>
                 <div className="h-2 bg-live-border rounded-full overflow-hidden">
                   <div className="h-full bg-live-danger rounded-full" style={{ width: catTotal ? `${(dormantInCat / catTotal) * 100}%` : '0%' }}></div>
@@ -690,7 +698,7 @@ function RelationshipsTab({ analytics, contacts, aiScreen }) {
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span>Total Dormant</span>
-                <span>{analytics.dormantCount}</span>
+                <span>{analytics.dormantCount} <span className="text-live-text-secondary text-xs">of {analytics.totalConnections}</span></span>
               </div>
               <div className="h-2 bg-live-border rounded-full overflow-hidden">
                 <div className="h-full bg-live-warning rounded-full" style={{ width: `${(analytics.dormantCount / analytics.totalConnections) * 100}%` }}></div>

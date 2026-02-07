@@ -74,6 +74,27 @@ export function DataProvider({ children }) {
       // Compute basic analytics from contacts
       const analytics = computeAnalyticsFromContacts(contacts)
 
+      // Fetch cached supplementary analytics (skills, endorsements, shares, etc.)
+      try {
+        const { analytics: cached } = await api.getAnalyticsCache()
+        if (cached) {
+          // Merge cached fields into computed analytics
+          const cacheFields = [
+            'skills', 'topEndorsedSkills', 'topEndorsers', 'endorsementCount',
+            'recommendationCount', 'recommendations', 'inferences', 'adtargeting',
+            'shares', 'postsByMonth', 'totalPosts', 'firstPost', 'lastPost',
+            'themeCounts', 'messageCount',
+          ]
+          for (const field of cacheFields) {
+            if (cached[field] !== undefined && cached[field] !== null) {
+              analytics[field] = cached[field]
+            }
+          }
+        }
+      } catch (e) {
+        // Analytics cache may not exist yet — computed values are fine
+      }
+
       setData({
         contacts,
         analytics,

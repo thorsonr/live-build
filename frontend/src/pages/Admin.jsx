@@ -8,7 +8,7 @@ const MODEL_OPTIONS = [
 ]
 
 export default function Admin({ user }) {
-  const [activeTab, setActiveTab] = useState('codes')
+  const [activeTab, setActiveTab] = useState('ai')
   const [analytics, setAnalytics] = useState(null)
   const [users, setUsers] = useState([])
   const [codes, setCodes] = useState([])
@@ -113,10 +113,10 @@ export default function Admin({ user }) {
   }
 
   const tabs = [
-    { id: 'codes', label: 'Invite Codes' },
-    { id: 'users', label: 'Users' },
-    { id: 'analytics', label: 'Analytics' },
     { id: 'ai', label: 'AI' },
+    { id: 'users', label: 'Users' },
+    { id: 'codes', label: 'Invite Codes' },
+    { id: 'analytics', label: 'Analytics' },
   ]
 
   const formatCost = (cost) => {

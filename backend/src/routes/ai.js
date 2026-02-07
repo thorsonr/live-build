@@ -34,8 +34,18 @@ router.post('/analyze', requireAuth, async (req, res, next) => {
       })
     }
 
+    // Look up user's name to filter from message index
+    const { data: userRow } = await supabaseAdmin
+      .from('users')
+      .select('first_name, last_name')
+      .eq('id', userId)
+      .single()
+    const userName = userRow
+      ? `${userRow.first_name || ''} ${userRow.last_name || ''}`.trim()
+      : null
+
     // Prepare data for AI
-    const dataSummary = prepareDataForAI(rawData)
+    const dataSummary = prepareDataForAI(rawData, userName)
 
     // Generate full analysis
     const { result: analysis, usage } = await generateFullAnalysis({

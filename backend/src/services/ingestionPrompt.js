@@ -24,7 +24,7 @@ const MAX_SHARES = 100
  * Sends full connections but only a message index (not full message bodies),
  * caps shares at 200, and aggregates if connections > 2000.
  */
-export function prepareDataForAI(rawData) {
+export function prepareDataForAI(rawData, userName) {
   const summary = {
     data_files_present: [],
     data_files_missing: [],
@@ -120,6 +120,16 @@ export function prepareDataForAI(rawData) {
     })
     summary.message_index = messageIndex
     summary.total_messages = (rawData.messages || []).length
+  }
+
+  // Remove the user's own entry from the message index so AI doesn't cite them
+  if (userName && summary.message_index) {
+    const userNameLower = userName.toLowerCase()
+    for (const key of Object.keys(summary.message_index)) {
+      if (key.toLowerCase() === userNameLower) {
+        delete summary.message_index[key]
+      }
+    }
   }
 
   // Skills — full data (small)

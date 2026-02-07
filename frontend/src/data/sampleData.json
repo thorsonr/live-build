@@ -35030,233 +35030,285 @@
     "screens": {
       "summary": {
         "executive_summary": {
-          "report_headline": "A Senior Leadership Network Primed for Strategic Reactivation",
-          "report_body": "You've built a 1,310-person network with remarkable depth in senior leadership and executive talent, anchored by Vertex Labs (your 17-year home base) and expanding across consulting, technology, and innovation-driven companies. The network skews heavily senior: 500+ executives, 530+ Managing Directors and VPs, plus dozens of Partners and Founders — people with real decision-making power. You've been an active networker over the years, but with 1,000+ relationships now dormant, the scale of untapped potential here is extraordinary. Your 11 written recommendations and 131 skill endorsements from senior leaders validate your expertise, and your content presence on AI transformation and innovation keeps you visible — but the biggest opportunity is in the relationships you've already built.",
-          "key_insight": "You have quietly assembled one of the most valuable networks in executive leadership and strategic consulting — the question isn't whether your network can help you succeed next, it's whether you'll systematically activate it. Over 1,000 senior professionals already know your name, your work ethic, and your expertise. A targeted re-engagement campaign reaching your top 20-30 high-value dormant contacts could unlock partnerships, board-level conversations, or leadership opportunities within weeks. The network is built. Now it needs to work for you."
-        }
+          "report_headline": "A Senior Tech Leadership Network With 1,300+ Connections Ready for Strategic Activation",
+          "report_body": "You have built an impressive 1,310-person network concentrated in technology consulting and professional services, with deep roots at Vertex Labs and Keystone Global. The network includes 127 Managing Directors and VPs, plus 23 recruiters — significant firepower for any career transition. However, you have messaged only 201 people (15% of your network), and most contact occurred before 2024. This represents a massive untapped opportunity: hundreds of senior leaders and decision-makers who already know you, but haven't heard from you recently.",
+          "key_insight": "Your network contains 127 executives at Managing Director level or above, but you have only messaged 69 of them. The remaining 58 senior leaders represent immediate, high-value reactivation opportunities — people who already invested in connecting with you and are now one thoughtful message away from becoming active advocates or referral sources."
+        },
+        "do_next_items": [
+          {
+            "action": "Reactivate 12 dormant VPs and Managing Directors from your Vertex Labs and Keystone Global clusters",
+            "why": "These are former colleagues at consulting firms who understand your work and can provide immediate introductions or role referrals. They represent your fastest path to new opportunities.",
+            "target_tab": "priorities"
+          },
+          {
+            "action": "Review your top 23 recruiter connections and message the 3 most senior",
+            "why": "You have built relationships with executive search professionals but haven't systematically activated them. Recruiters are paid to place people like you — make it easy for them.",
+            "target_tab": "network"
+          },
+          {
+            "action": "Check your endorsement gaps on strategic skills like GenAI, AI Strategy, and Digital Transformation",
+            "why": "You list these as core skills but have minimal endorsements validating them. In a competitive market, perception gaps cost you opportunities before you even apply.",
+            "target_tab": "skills"
+          },
+          {
+            "action": "Reconnect with Phoenix Adams — your most frequent correspondent outside your own messages",
+            "why": "110 messages indicate a strong working relationship. This person knows your work deeply and could be a powerful advocate or referral source worth reactivating.",
+            "target_tab": "relationships"
+          },
+          {
+            "action": "Review how LinkedIn categorizes your seniority and job search status",
+            "why": "LinkedIn thinks you are looking for a job and may be miscategorizing your experience level, which affects what opportunities and ads you see. Knowing their view helps you correct misperceptions.",
+            "target_tab": "inferences"
+          }
+        ],
+        "top_opportunities": [
+          {
+            "name": "River Zhang",
+            "company": "Vertex Labs",
+            "role": "Global Managing Director - NA Hitech Industry",
+            "reason": "Global MD with 31 message history and a written recommendation for you. Clearly invested in your success and well-positioned to make senior introductions in tech.",
+            "suggested_action": "Send a brief update on your current focus and ask if they know anyone exploring AI transformation or digital strategy initiatives — exactly the space where your expertise aligns with their portfolio."
+          },
+          {
+            "name": "Greg Logan",
+            "company": "Forge Analytics",
+            "role": "President",
+            "reason": "President-level contact with 30 messages as recently as May 2025. This is a current, active relationship with a C-suite executive who knows your work.",
+            "suggested_action": "Request a 20-minute call to get their perspective on market trends and who they see doing interesting work in business transformation. Ask for two introductions."
+          },
+          {
+            "name": "Doug Thorne",
+            "company": "Vertex Labs",
+            "role": "Strategy Consultant",
+            "reason": "29 messages through February 2024, indicating a strong working relationship that has gone quiet. Vertex Labs alum who can provide warm introductions into that ecosystem.",
+            "suggested_action": "Reconnect with a specific question about their current work or a trend you are seeing in strategy consulting. Re-establish the relationship before asking for anything."
+          }
+        ]
       },
       "network": {
-        "network_shape_insight": "This network is deep, not broad—and that creates both leverage and risk. Vertex Labs dominates at 247 connections (19%), with Keystone Global adding 94 more. Combined, these two firms represent nearly a quarter of your entire network. That concentration is a double-edged sword: it signals deep institutional knowledge and trust within those ecosystems, but it also means your professional identity is tightly coupled to two organizations. If those relationships go stale or those firms shift strategy, a significant portion of your network becomes less relevant overnight. The senior leadership ratio is strong—284 Managing Directors, 89 VPs—but notice the structural gap: only 9 identified recruiters. For someone likely in transition or exploring opportunities, that is a blindspot. The network has executive firepower but lacks the connective tissue (recruiters, business development professionals, cross-industry bridge contacts) that accelerates movement. The opportunity here is not to build more connections—it is to diversify strategically and reactivate the senior layer you have already built."
+        "network_shape_insight": {
+          "key_insight": "Your network is heavily concentrated in two organizations: Vertex Labs (188 connections, 14%) and Keystone Global (104 connections, 8%). Combined, these two firms represent 22% of your total network, creating significant single-ecosystem dependency.",
+          "why_it_matters": "This concentration means your network visibility is largely confined to the consulting services ecosystem. If you are exploring opportunities outside traditional advisory firms — corporate strategy roles, tech companies, startups, or industry — you lack the bridging connections to make those transitions efficiently. You have built depth at the cost of breadth.",
+          "suggested_action": "Strategically add 30-50 connections in adjacent ecosystems: corporate strategy leaders at Fortune 500 tech companies, product executives, venture capitalists, or founders. Focus on people who sit at the intersection of your current network and where you want to go next. This creates bridges without abandoning the network you have built."
+        }
       },
       "relationships": {
-        "opportunity_insight": "You have 1,310 connections but have only messaged 201 of them—ever. That means 1,109 people in your network have never received a single message from you. This is not unusual (most professionals message fewer than 15% of their connections), but it represents a massive reservoir of untapped potential. Here is what makes this actionable: 284 of those dormant connections are Managing Directors. 89 are VPs. 28 are C-suite executives. These are not strangers—they are people who accepted your connection request and are one thoughtful message away from being reactivated. In a job search, the difference between spinning your wheels and landing your next role often comes down to 5-10 strategic conversations. You already have the access. The work is not networking—it is re-engagement."
+        "opportunity_insight": {
+          "key_insight": "You have messaged 201 people out of 1,310 connections (15%), which is typical for professionals but represents 1,109 dormant relationships. More telling: 155 of your 201 messaging relationships had their last contact before 2024, meaning only 46 people have heard from you in the past year.",
+          "why_it_matters": "The gap between network size and relationship depth is your largest untapped asset. You have 127 executives at VP level or above, 23 recruiters, and hundreds of former colleagues who already know your work — but most have not heard from you recently. In a tight job market, dormant relationships decay fast. The person who remembers you from 2021 will not think of you for an opportunity in 2025 unless you reactivate that connection.",
+          "suggested_action": "Commit to reactivating 5 dormant relationships per week for the next 8 weeks. Prioritize former colleagues at Vertex Labs and Keystone Global who are now at different firms, plus any VP-level contacts you messaged once but never followed up with. Use a simple reactivation approach: share something relevant to their work, ask a thoughtful question, or acknowledge a recent milestone. Make it about them, not you."
+        }
       },
       "skills_expertise": {
-        "expertise_insight": "Your listed skills paint a picture of someone who lives at the intersection of strategy, digital transformation, and generative AI—but the endorsement data reveals a perception gap. Your top-endorsed skills (Project Management, Program Management, Innovation Consulting) are foundational but generic. Meanwhile, Generative AI Tools and GenAI—skills you clearly position as core to your value proposition—have scattered endorsement support, mostly from a small cluster of contacts (Andrew Reynolds, Sage Vasquez, Harley Yang). This suggests the market has not yet fully associated you with AI leadership, despite your content strategy heavily featuring it. The bigger issue: 23 of your 54 listed skills have zero endorsements. Skills like AI Strategy, Digital Innovation, and Transformational Leadership are credibility gaps waiting to be closed. The fix is surgical: ask 3-5 senior contacts who have worked with you on AI initiatives to endorse those specific skills. Endorsements from Managing Directors carry more weight than volume from junior colleagues. This is a 20-minute fix that strengthens your positioning significantly."
+        "expertise_insight": {
+          "key_insight": "You list 54 skills, but your endorsement distribution reveals a significant perception gap: your top-endorsed skills are traditional consulting capabilities (Project Management, Program Management, Business Process Improvement), while your most strategically valuable skills (GenAI, Generative AI Tools, AI Strategy) have minimal endorsements. Only 2 people have endorsed your GenAI expertise despite it being central to your current positioning.",
+          "why_it_matters": "LinkedIn's algorithm and recruiters use endorsements as social proof. When your listed expertise does not match your validated expertise, you appear less credible — or worse, you get filtered out of searches for the roles you actually want. If you are positioning yourself as an AI transformation leader but your endorsements say 'traditional project manager,' the market will see you as the latter.",
+          "suggested_action": "Request targeted endorsements from 5-7 people who have directly observed your AI and digital transformation work. Be specific: message them individually, remind them of the project context, and ask them to endorse 2-3 specific skills (GenAI, AI Strategy, Digital Transformation). Do not mass-request endorsements — quality and specificity matter more than volume."
+        }
       },
       "your_content": {
         "content_themes": [
           {
-            "theme": "AI Strategy & Transformation",
+            "theme": "AI & Generative AI Strategy",
             "post_count": 28
           },
           {
-            "theme": "Generative AI & GenAI Tools",
+            "theme": "Digital Transformation",
             "post_count": 22
           },
           {
-            "theme": "Digital Transformation",
+            "theme": "Professional Networking & Career Development",
             "post_count": 18
           },
           {
-            "theme": "Professional Networking & Career Strategy",
+            "theme": "Strategic Leadership & Executive Coaching",
             "post_count": 14
           },
           {
-            "theme": "Innovation & Change Management",
+            "theme": "Data Strategy & Analytics",
             "post_count": 10
           },
           {
-            "theme": "Data Strategy & Analytics",
+            "theme": "Technology Innovation",
             "post_count": 8
           }
         ],
-        "content_strategy_insight": "Your content strategy is clear and focused: you are positioning yourself as an AI transformation advisor, with nearly 70% of your posts clustering around AI strategy, generative AI tools, and digital transformation. That thematic consistency is a strength—anyone scanning your feed knows exactly what you stand for. The cadence is solid (you posted 100 times in the dataset timeframe, suggesting regular activity), but there is a recency question: the timestamps suggest bursts of activity followed by quieter periods. LinkedIn rewards consistency over volume—posting every 7-10 days with strategic insight keeps you visible without fatiguing your audience. The bigger opportunity: your posts skew educational and thought leadership, but they lack the human narrative that makes content sticky. Posts about professional networking and career strategy got engagement because they felt personal. More of that—stories about navigating change, lessons from client work, behind-the-scenes decision-making—would make your AI expertise feel less abstract and more relatable. You have the content engine. Now make it feel like a conversation, not a seminar."
+        "content_strategy_insight": {
+          "key_insight": "You are an active content creator with 237 posts, showing consistent thought leadership in AI strategy, digital transformation, and professional development. However, your posting pattern shows heavy activity in mid-2024 (June-October) followed by a sharp decline. Your most recent posts in late 2025 and early 2026 focus heavily on networking and career strategy, suggesting a shift in content focus that may signal a career transition.",
+          "why_it_matters": "Consistent content presence is how you stay top-of-mind with your network. When you go quiet, your visibility decays — people stop thinking of you for opportunities, and the algorithm stops showing your profile. Your content quality is strong and your themes align with high-demand areas (AI, transformation, leadership), but inconsistent posting undermines that investment. The recent shift toward networking and career content may also signal to your network that you are in transition mode, which can be both helpful (people know you are open) and limiting (you risk being seen as only looking for help).",
+          "suggested_action": "Resume a consistent posting cadence of 2-3 times per week, mixing thought leadership (AI trends, transformation insights) with relationship-building content (celebrating others, asking questions, sharing lessons). Balance 'giving' content (insights, frameworks, resources) with 'receiving' content (asking for input, acknowledging gaps). This keeps you visible while positioning you as a contributor, not just a job seeker."
+        }
       },
       "your_advocates": {
-        "advocate_insight": "You have 11 written recommendations, all from Vertex Labs colleagues, and they tell a consistent story: strategic thinker, collaborative leader, trusted advisor, strong at navigating complexity. The language is professional and polished—phrases like 'analytical rigor,' 'executive presence,' and 'transformative projects' recur across multiple recommendations. That consistency is credibility. The challenge: all 11 are from the same firm, and most are from peers or direct reports. You have zero recommendations from clients, zero from executives outside Vertex Labs, and zero from cross-industry collaborators. That creates a single-context endorsement problem—it signals deep trust within one ecosystem but raises the question of whether your value translates beyond it. The fix is straightforward: request 2-3 targeted recommendations from senior leaders at Forge Analytics (your current/recent employer) or from clients you advised during consulting engagements. A recommendation from a client CEO or a cross-functional executive carries 10x the weight of another peer endorsement. You have 1,310 connections. At least 20 of them would write you a strong recommendation if you asked. This is a 30-minute conversation that significantly strengthens your profile for anyone evaluating you outside the Vertex Labs bubble."
+        "advocate_insight": {
+          "key_insight": "You have 11 written recommendations, all from senior professionals at Vertex Labs and Keystone Global between December 2023 and January 2024. The recommendations are consistently strong, emphasizing strategic thinking, leadership, and execution. However, all advocates are from the same consulting ecosystem and the same 6-week time period, suggesting a coordinated effort (likely related to a departure or transition).",
+          "why_it_matters": "Recommendations from a single employer cluster can appear transactional or limited in scope. While these are high-quality endorsements from respected professionals, the lack of diversity (no client testimonials, no cross-industry validation, no recent advocates) limits their impact. Recruiters and hiring managers value recommendations that demonstrate consistent performance across different contexts and over time. Your current set says 'I was valued at these two firms' — it does not yet say 'multiple stakeholders across different environments see me as exceptional.'",
+          "suggested_action": "Request 2-3 new recommendations from people outside the Vertex Labs/Keystone Global ecosystem: a client you advised, a peer at a different firm, or someone you mentored who has since moved to a new role. Focus on people who can speak to different dimensions of your work (client impact, innovation leadership, team development). Space these requests over 2-3 months to avoid appearing transactional."
+        }
       },
       "priorities": {
         "outreach_priorities": [
           {
             "rank": 1,
-            "name": "Brian York",
-            "company": "Forge Analytics",
-            "title": "EVP, Chief Information & Technology Officer",
-            "category": "C-Suite Executive",
-            "relationship_strength": "Cold",
-            "why_prioritized": "C-suite executive at your current/recent employer. Never messaged despite being a direct connection. Represents immediate internal alignment opportunity or reference potential."
+            "name": "River Zhang",
+            "company": "Vertex Labs",
+            "title": "Global Managing Director - NA Hitech Industry",
+            "category": "Executive",
+            "relationship_strength": "Warm",
+            "why_prioritized": "Global MD with 31 message history, written recommendation, and last contact in January 2026. This is an active, invested relationship with a senior executive who knows your work deeply and sits at the intersection of tech and consulting — exactly where your expertise plays."
           },
           {
             "rank": 2,
             "name": "Greg Logan",
             "company": "Forge Analytics",
             "title": "President",
-            "category": "C-Suite Executive",
-            "relationship_strength": "Warm (30 messages, last contact May 2025)",
-            "why_prioritized": "President at Forge Analytics with established messaging history. Recent contact suggests active relationship. High-value internal sponsor or reference."
+            "category": "C-Suite",
+            "relationship_strength": "Strong",
+            "why_prioritized": "President-level contact with 30 messages and last contact in May 2025. This is a current relationship with a C-suite executive who can make high-level introductions and provide strategic counsel on your next move."
           },
           {
             "rank": 3,
-            "name": "Phoenix Adams",
-            "company": "Goldcrest Corp",
-            "title": "Director of Development",
-            "category": "Senior Leader",
-            "relationship_strength": "Strong (110 messages, last contact Jan 2026)",
-            "why_prioritized": "By far your most-messaged contact outside yourself. Represents your strongest active relationship. Likely collaborator, mentor, or close professional ally with deep trust."
+            "name": "Wendy Flynn",
+            "company": "Unknown",
+            "title": "Unknown",
+            "category": "Power Connector",
+            "relationship_strength": "Strong",
+            "why_prioritized": "1,278 messages make this your most frequent correspondent by an order of magnitude, with contact as recent as January 2026. This person is clearly a close collaborator or advisor — leverage this relationship for introductions and strategic guidance."
           },
           {
             "rank": 4,
-            "name": "Daniel Moore",
-            "company": "Ironbridge Solutions",
-            "title": "Senior US HR Recruiter",
-            "category": "Recruiter",
-            "relationship_strength": "Warm (28 messages, last contact June 2025)",
-            "why_prioritized": "Recruiter with recent messaging history. In job-search mode, this is a high-leverage reactivation opportunity. Recruiters are connectors to unadvertised roles."
+            "name": "Doug Thorne",
+            "company": "Vertex Labs",
+            "title": "Strategy Consultant",
+            "category": "Warm Colleague",
+            "relationship_strength": "Warm",
+            "why_prioritized": "29 messages through February 2024 indicate a strong working relationship that has recently gone dormant. Vertex Labs connection who can reintroduce you into that ecosystem and provide insider intelligence on opportunities."
           },
           {
             "rank": 5,
-            "name": "Wendy Flynn",
-            "company": "Brookfield Technologies",
-            "title": "VP, Partnerships",
-            "category": "VP",
-            "relationship_strength": "Strong (1,278 messages, last contact Jan 2026)",
-            "why_prioritized": "Your second-most messaged contact (after yourself in conversation threads). VP-level with extremely active relationship. Represents deep trust and potential sponsorship."
+            "name": "Daniel Moore",
+            "company": "Southgate Partners",
+            "title": "Chief Operations Officer",
+            "category": "Executive",
+            "relationship_strength": "Warm",
+            "why_prioritized": "COO-level contact with 28 messages through June 2025. Recent relationship with operational leadership perspective — someone who understands execution and can speak to your ability to deliver results."
           },
           {
             "rank": 6,
-            "name": "River Zhang",
-            "company": "Co-Owner, Prism Data",
-            "title": "Co-Owner",
-            "category": "Founder/Executive",
-            "relationship_strength": "Warm (31 messages, last contact Jan 2026)",
-            "why_prioritized": "Founder/co-owner with recent contact. Endorsed you on multiple skills. Represents entrepreneurial network bridge and potential advisory/consulting opportunity."
+            "name": "Sage Vasquez",
+            "company": "Vertex Labs",
+            "title": "Managing Director",
+            "category": "Executive + Advocate",
+            "relationship_strength": "Warm",
+            "why_prioritized": "Managing Director with 22 messages, 22 skill endorsements, and a written recommendation. This person is a power advocate who has already demonstrated significant investment in your success."
           },
           {
             "rank": 7,
-            "name": "Andrew Reynolds",
-            "company": "Vanguard Digital",
-            "title": "VP of Revenue Operations",
-            "category": "VP",
-            "relationship_strength": "Warm (11 messages, last contact Dec 2025)",
-            "why_prioritized": "VP with recent contact. Wrote you a recommendation and endorsed 31 of your skills—your strongest advocate in the data. High trust, high influence."
+            "name": "Wei Dunn",
+            "company": "Vertex Labs",
+            "title": "Senior Manager",
+            "category": "Warm Colleague",
+            "relationship_strength": "Warm",
+            "why_prioritized": "23 messages through October 2025, indicating a recent and active relationship. Can provide current intelligence on Vertex Labs opportunities and culture."
           },
           {
             "rank": 8,
-            "name": "Kendall Xu",
-            "company": "Forge Analytics",
-            "title": "Compliance Director and AML Compliance Officer",
-            "category": "Director",
-            "relationship_strength": "Warm (15 messages, last contact Jan 2024)",
-            "why_prioritized": "Forge Analytics director who wrote you a recommendation and endorsed 12 skills. Relationship went quiet in 2024—perfect candidate for strategic reactivation."
+            "name": "Cole Rice",
+            "company": "Propel Solutions",
+            "title": "Venture Principal",
+            "category": "Venture Capital",
+            "relationship_strength": "Warm",
+            "why_prioritized": "21 messages through March 2024 with a Venture Principal. If you are exploring startup advisory or corporate innovation roles, this connection bridges consulting and venture."
           },
           {
             "rank": 9,
-            "name": "Sage Vasquez",
-            "company": "Horizon Ventures",
-            "title": "VP, US Business Development, Global Partnerships",
-            "category": "VP",
-            "relationship_strength": "Warm (22 messages, last contact Mar 2024)",
-            "why_prioritized": "VP in business development who endorsed 36 of your skills and wrote a recommendation. Strong advocate who has gone quiet for nearly two years. High-value reactivation target."
+            "name": "Felix Young",
+            "company": "Navigate Digital",
+            "title": "Director, Product Management, Loyalty",
+            "category": "Product Leader",
+            "relationship_strength": "Warm",
+            "why_prioritized": "Director-level product leader with 20 messages through October 2024. Product management is adjacent to strategy consulting and represents a potential pivot path — this person can provide insights on that transition."
           },
           {
             "rank": 10,
-            "name": "Doug Thorne",
-            "company": "Ember Capital",
-            "title": "Senior Power Platform / D365 / SharePoint Consultant",
-            "category": "Senior Consultant",
-            "relationship_strength": "Warm (29 messages, last contact Feb 2024)",
-            "why_prioritized": "High message volume suggests significant past collaboration. Relationship dormant for nearly two years. Technical expertise in platforms relevant to digital transformation work."
+            "name": "Remy Dixon",
+            "company": "Evolve Partners",
+            "title": "Lead Product Manager, AI + Digital Assistance",
+            "category": "AI Product Leader",
+            "relationship_strength": "Strong",
+            "why_prioritized": "Product leader focused specifically on AI with 19 messages through October 2025. This is a recent relationship with someone working directly in your target domain — potential collaborator or referral source."
           }
         ],
         "revival_playbooks": [
           {
-            "name": "Brian York",
-            "title": "EVP, Chief Information & Technology Officer, Forge Analytics",
-            "context_hook": "Never messaged despite being directly connected. C-suite at current/recent employer.",
-            "message_template": "Brian, we have been connected for a while but I realized we have never had a real conversation. I have been following the transformation work happening at Forge Analytics and would love to hear your perspective on where you see the biggest opportunities in the next 12-18 months—particularly around AI strategy and platform modernization. Would you be open to a 20-minute call in the next few weeks? I promise to keep it focused and valuable."
+            "name": "River Zhang",
+            "title": "Global Managing Director - NA Hitech Industry, Vertex Labs",
+            "context_hook": "You wrote a recommendation for me in December 2023 and we last connected in January. You know my work in transformation and strategy deeply.",
+            "message_template": "I have been thinking about your portfolio at Vertex Labs and the evolution of AI strategy work in the tech sector. I would value 20 minutes to get your perspective on where you see the most interesting work happening in digital transformation right now — particularly around enterprises trying to move beyond pilots to scaled AI deployment. Would you be open to a brief call in the next few weeks?"
           },
           {
             "name": "Greg Logan",
             "title": "President, Forge Analytics",
-            "context_hook": "30 messages exchanged, last contact May 2025. Active relationship with C-suite executive.",
-            "message_template": "Greg, it has been a few months since we last connected and I wanted to check in. I have been reflecting on some of the strategic challenges we discussed earlier this year and have been advising a few organizations on similar transformation initiatives. Would love to catch up and hear how things have evolved on your end. Any chance you are free for a quick call in the next couple of weeks?"
+            "context_hook": "We have stayed in touch through May 2025, and as President of Forge Analytics you have visibility into where the market is moving.",
+            "message_template": "I have been exploring my next move and wanted to get your perspective on the landscape. Forge Analytics is in an interesting position at the intersection of data and decision-making — I imagine you are seeing patterns in what companies are prioritizing. Would you have 20 minutes for a conversation? I would value your counsel on where you think the most interesting opportunities are emerging."
           },
           {
-            "name": "Daniel Moore",
-            "title": "Senior US HR Recruiter, Ironbridge Solutions",
-            "context_hook": "28 messages, last contact June 2025. Recruiter with warm relationship.",
-            "message_template": "Daniel, I hope you have been well. It has been a few months since we last connected and I wanted to reach out because I am actively exploring new opportunities in strategy and transformation leadership—particularly roles where AI strategy and change management intersect. I know you work with senior leaders in this space and would value your perspective on where you are seeing demand right now. Open to a quick conversation if you have 15 minutes in the coming weeks."
-          },
-          {
-            "name": "Andrew Reynolds",
-            "title": "VP of Revenue Operations, Vanguard Digital",
-            "context_hook": "Wrote you a recommendation and endorsed 31 skills. 11 messages exchanged, last contact Dec 2025.",
-            "message_template": "Andrew, I have been thinking about the work we did together and how much I appreciated your support (including that recommendation you wrote—it still means a lot). I am exploring what is next for me and wanted to reconnect. You always had sharp instincts about where the market is heading. Would you be open to a quick call to share perspectives? I would love to hear what you are seeing in the revenue operations and transformation space right now."
-          },
-          {
-            "name": "Kendall Xu",
-            "title": "Compliance Director, Forge Analytics",
-            "context_hook": "15 messages, wrote recommendation, endorsed 12 skills. Last contact Jan 2024—relationship went quiet.",
-            "message_template": "Kendall, it has been almost two years since we last spoke and I wanted to reconnect. I have been thinking about the compliance and risk management challenges we navigated together and how much I valued your partnership. I am exploring new opportunities right now and would love to catch up—both to hear what you have been working on and to share what I am seeing in the market. Any chance you have 20 minutes in the next few weeks?"
+            "name": "Doug Thorne",
+            "title": "Strategy Consultant, Vertex Labs",
+            "context_hook": "We worked together and stayed in close touch through early 2024. You understand the Vertex Labs ecosystem and strategy work deeply.",
+            "message_template": "It has been almost a year since we last connected, and I have been thinking about the work you were doing around client strategy at Vertex Labs. I would love to hear what you are focused on now and how you are thinking about the evolution of strategy consulting in the AI era. Are you open to catching up over coffee or a call?"
           },
           {
             "name": "Sage Vasquez",
-            "title": "VP, US Business Development, Global Partnerships, Horizon Ventures",
-            "context_hook": "22 messages, wrote recommendation, endorsed 36 skills. Last contact Mar 2024—nearly two years dormant.",
-            "message_template": "Sage, it has been way too long. I was reviewing my network recently and realized we have not connected in nearly two years, which feels like a missed opportunity given how much I valued working with you. I am exploring new roles right now—focused on transformation and AI strategy—and would love to reconnect. You always had great instincts about partnerships and market dynamics. Open to a quick call if you have time in the next couple of weeks?"
+            "title": "Managing Director, Vertex Labs",
+            "context_hook": "You wrote a recommendation for me, endorsed 22 of my skills, and we exchanged 22 messages. You are a demonstrated advocate who invested significantly in my success.",
+            "message_template": "I wanted to reconnect and thank you again for the recommendation and endorsements you provided last year — they have been valuable as I have been exploring next steps. I would appreciate the chance to update you on where I have been focusing and get your perspective on a few opportunities I am considering. Would you have time for a brief call?"
+          },
+          {
+            "name": "Daniel Moore",
+            "title": "Chief Operations Officer, Southgate Partners",
+            "context_hook": "We stayed in touch through June 2025, and as COO you have a strong operational perspective on what makes transformation work succeed or fail.",
+            "message_template": "I have been reflecting on our conversations about operational execution in transformation programs. As you think about what Southgate Partners is building, where are you seeing the biggest gaps between strategy ambition and execution reality? I would welcome the chance to hear your current thinking and share some patterns I am seeing. Open to a conversation?"
+          },
+          {
+            "name": "Cole Rice",
+            "title": "Venture Principal, Propel Solutions",
+            "context_hook": "We connected 21 times through March 2024, and your venture perspective offers a different lens on innovation and transformation than traditional consulting.",
+            "message_template": "I have been thinking about the intersection of consulting and venture — particularly around how startups approach transformation differently than enterprises. I would love to hear what you are seeing in the portfolio at Propel Solutions and whether any of the companies you are working with could benefit from strategic advisory support. Would you be open to reconnecting?"
           }
         ]
       },
       "linkedins_view": {
         "absurd_inferences": [
-          "Flight Training (you are a strategy consultant, not a pilot)",
-          "Mosaics and Mosaiq (appears twice—LinkedIn thinks you do tile art and use oncology software)",
-          "Knee (this is a body part, not a professional skill)",
-          "Scripture and Bible (unless you are moonlighting in theology)",
-          "Preps (high school sports? prep work? unclear and irrelevant)"
+          "Flight Training — No indication in your profile that you are a pilot or work in aviation."
         ],
         "mismatches": [
-          {
-            "inference_type": "Job Seniority",
-            "linkedin_thinks": "Entry",
-            "reality": "You are clearly senior (Managing Director equivalent based on network composition and recommendations)",
-            "impact": "LinkedIn is showing you entry-level job postings and ads. This dramatically limits your visibility to executive recruiters and senior role opportunities."
-          },
-          {
-            "inference_type": "Career Category",
-            "linkedin_thinks": "Human resources professional",
-            "reality": "You are a strategy and transformation consultant focused on AI and digital transformation",
-            "impact": "Recruiters searching for transformation leaders or AI strategists are not seeing your profile because LinkedIn has miscategorized your function entirely."
-          },
-          {
-            "inference_type": "Job Search Signal",
-            "linkedin_thinks": "Interested in a new job (true)",
-            "reality": "Correctly inferred—you searched for jobs or clicked postings in the last 30 days",
-            "impact": "This is working in your favor. Recruiters can see you are open to opportunities."
-          }
+          "Seniority: LinkedIn categorizes you as 'Entry' level despite 12+ years of experience and senior roles at Vertex Labs and Keystone Global. This dramatically limits your visibility in executive searches and affects what job ads you see.",
+          "Gender: LinkedIn infers you are male based on your first name and profile signals. While this may be correct, it is worth noting that gendered inference affects ad targeting and search visibility.",
+          "Job Search Status: LinkedIn has flagged you as 'Interested in a new job' based on recent activity (searches, profile updates, or post clicks). This means recruiters can see you are open to opportunities, which can be helpful — but also signals potential desperation if overused.",
+          "Career Category: LinkedIn classifies you as a 'Human resources professional,' which is wildly off-base given your consulting and strategy background. This miscategorization means you are not appearing in searches for strategy consultants, transformation leaders, or AI advisors."
         ],
-        "reality_check_insight": "LinkedIn thinks you are an entry-level HR professional interested in flight training who occasionally works on mosaics. This would be hilarious if it were not actively limiting your career opportunities. The seniority misclassification is the most damaging: being tagged as 'Entry' means the algorithm is not surfacing your profile to executive recruiters or showing you senior-level roles. The career category error (HR instead of Strategy/Transformation) compounds the problem—you are invisible to the exact recruiters who should be finding you. The fix requires deliberate profile optimization: update your headline to explicitly include 'AI Strategy,' 'Digital Transformation,' and 'Executive Advisor.' Add those terms to your About section in the first two sentences. Request recommendations from clients or executives that use the language of senior strategy work. LinkedIn's algorithm is not magic—it is keyword matching and behavioral signals. Right now, it is matching you to the wrong universe. The good news: the job search signal is firing correctly, so once you fix the categorization, recruiters will see you are available. The absurd inferences (Flight Training, Mosaics, Knee) are entertaining but harmless—just ignore them. Focus on fixing the seniority and function misclassification. That is the difference between being invisible and being discoverable."
+        "reality_check_insight": "LinkedIn thinks you are an entry-level HR professional interested in flight training. The seniority and career category mismatches are serious problems — they mean you are invisible to recruiters searching for senior strategy consultants or transformation leaders. The 'Entry' seniority classification is particularly damaging: it filters you out of executive searches and shows you junior-level job ads instead of the VP and Director roles you should be seeing. The HR miscategorization suggests LinkedIn is overweighting certain skills or connections in your profile and missing the strategic consulting narrative entirely. These perception gaps are costing you opportunities before you even apply. The good news: you can correct this by updating your headline, refining your About section to emphasize strategy and transformation, and ensuring your current position accurately reflects your seniority level."
       }
     }
   },
   "sampleMessages": {
     "contact": {
-      "name": "Brian York",
-      "position": "EVP, Chief Information & Technology Officer",
-      "company": "Forge Analytics",
-      "relationship": "Cold",
-      "whyPrioritized": "C-suite executive at your current/recent employer. Never messaged despite being a direct connection. Represents immediate internal alignment opportunity or reference potential."
+      "name": "River Zhang",
+      "position": "Global Managing Director - NA Hitech Industry",
+      "company": "Vertex Labs",
+      "relationship": "Warm",
+      "whyPrioritized": "Global MD with 31 message history, written recommendation, and last contact in January 2026. This is an active, invested relationship with a senior executive who knows your work deeply and sits at the intersection of tech and consulting — exactly where your expertise plays."
     },
     "userContext": "Exploring partnership opportunities and strengthening strategic relationships in the technology leadership space.",
     "messages": {
       "variant_a": {
-        "subject": "Exploring alignment opportunities at Forge",
-        "body": "Hi Brian,\n\nI noticed we've been connected here but haven't had the chance to speak directly. Given your role leading technology and information strategy at Forge Analytics, I wanted to reach out about potential alignment opportunities.\n\nI'm currently focused on exploring strategic partnerships in the technology leadership space, and I believe there could be valuable synergies between your initiatives at Forge and the work I'm doing. Your perspective on where Forge is heading with its technology infrastructure would be incredibly valuable.\n\nWould you be open to a brief conversation in the coming weeks? I'm flexible on timing and happy to work around your schedule. Even 15 minutes would be appreciated.\n\nLooking forward to connecting."
+        "subject": "Quick thought on NA hitech trends",
+        "body": "River, hope you've had a strong start to Q1. I've been watching some interesting shifts in how North American hitech companies are approaching their transformation strategies, and given your vantage point at Vertex Labs, I'd value your perspective.\n\nI'm seeing a pattern where technical leadership and strategic advisory are converging in ways that create real partnership opportunities — particularly around how companies scale their innovation practices. Given our past conversations and your deep understanding of this space, I think there might be some interesting alignment worth exploring.\n\nWould you have 20 minutes in the next couple weeks for a conversation? I'd be curious to hear what you're seeing from your side, and I have a few ideas I'd like to run by you. No pressure if timing doesn't work — I know how packed your schedule gets."
       },
       "variant_b": {
-        "subject": "Long overdue conversation",
-        "body": "Hi Brian,\n\nI realized we've been connected on here for a while, but I've never actually reached out to introduce myself properly – which seems like a missed opportunity given we're both at Forge.\n\nI've been paying attention to the technology direction you're driving as EVP and CIO, and I'm genuinely curious about your vision for where things are heading. I'm currently exploring strategic relationships in the tech leadership space, and I think there might be some interesting overlap with what you're building.\n\nI'd love to grab 20 minutes with you – whether that's a coffee, a quick Zoom, or just a walk if you prefer to get away from screens for a bit. No formal agenda, just a chance to connect and see if there are ways we might support each other's initiatives.\n\nWhat does your calendar look like in the next couple of weeks?"
+        "subject": "Overdue catch-up",
+        "body": "River — realized it's been since January since we last connected, which is far too long given how quickly things move in our world. Hope Vertex is treating you well and that you're not buried under the usual Q1 chaos.\n\nI've been thinking about our previous conversations, especially around where hitech leadership is heading. Some patterns I'm seeing lately reminded me of insights you'd shared, and honestly, I'd love to get your take on a few partnership concepts that have been percolating. Your recommendation meant a lot, and I've been intentional about where I focus — which is why I wanted to reconnect with you specifically.\n\nAny chance you're up for a casual coffee chat (virtual or in-person) in the coming weeks? Would love to hear what's keeping you busy and share what I'm working on. And if nothing else, just good to catch up with someone who actually gets this space."
       }
     }
   }
