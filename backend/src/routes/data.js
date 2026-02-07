@@ -351,7 +351,7 @@ router.get('/tracker', requireAuth, requireTracker, async (req, res, next) => {
 // POST /api/data/tracker — create tracker entry
 router.post('/tracker', requireAuth, requireTracker, async (req, res, next) => {
   try {
-    const { contact_name, contact_company, contact_position, status, notes } = req.body
+    const { contact_name, contact_company, contact_position, contact_email, contact_phone, status, notes } = req.body
 
     if (!contact_name) {
       return res.status(400).json({ error: 'contact_name is required' })
@@ -367,6 +367,8 @@ router.post('/tracker', requireAuth, requireTracker, async (req, res, next) => {
         contact_name,
         contact_company: contact_company || null,
         contact_position: contact_position || null,
+        contact_email: contact_email || null,
+        contact_phone: contact_phone || null,
         status: entryStatus,
         notes: notes || null,
       })
@@ -387,7 +389,7 @@ router.post('/tracker', requireAuth, requireTracker, async (req, res, next) => {
 router.patch('/tracker/:id', requireAuth, requireTracker, async (req, res, next) => {
   try {
     const { id } = req.params
-    const { status, notes, contact_name, contact_company, contact_position, engagement_log } = req.body
+    const { status, notes, contact_name, contact_company, contact_position, contact_email, contact_phone, engagement_log } = req.body
     const updates = { last_action_at: new Date().toISOString() }
 
     const validStatuses = ['identified', 'contacted', 'replied', 'meeting', 'closed', 'parked']
@@ -398,6 +400,8 @@ router.patch('/tracker/:id', requireAuth, requireTracker, async (req, res, next)
     if (contact_name) updates.contact_name = contact_name
     if (contact_company !== undefined) updates.contact_company = contact_company
     if (contact_position !== undefined) updates.contact_position = contact_position
+    if (contact_email !== undefined) updates.contact_email = contact_email
+    if (contact_phone !== undefined) updates.contact_phone = contact_phone
 
     // Validate and update engagement log
     if (engagement_log !== undefined) {

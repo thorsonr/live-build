@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { DndContext, useDraggable, useDroppable, pointerWithin } from '@dnd-kit/core'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { DndContext, useDraggable, useDroppable, pointerWithin, useSensor, useSensors, PointerSensor } from '@dnd-kit/core'
 import { api } from '../lib/api'
 
 const STATUSES = [
@@ -46,9 +46,11 @@ function DraggableCard({ id, children }) {
   )
 }
 
-function TrackerDetailPanel({ entry, onClose, onUpdate }) {
+function TrackerDetailModal({ entry, onClose, onUpdate }) {
   const [status, setStatus] = useState(entry.status)
   const [notes, setNotes] = useState(entry.notes || '')
+  const [email, setEmail] = useState(entry.contact_email || '')
+  const [phone, setPhone] = useState(entry.contact_phone || '')
   const [engagementLog, setEngagementLog] = useState(entry.engagement_log || [])
   const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0])
   const [logType, setLogType] = useState('Email')
@@ -78,6 +80,18 @@ function TrackerDetailPanel({ entry, onClose, onUpdate }) {
     } catch (err) {
       console.error('Failed to update status:', err)
       setStatus(entry.status)
+    }
+  }
+
+  const handleSaveContactInfo = async () => {
+    try {
+      const data = await api.updateTracker(entry.id, {
+        contact_email: email || null,
+        contact_phone: phone || null,
+      })
+      onUpdate(data.entry)
+    } catch (err) {
+      console.error('Failed to save contact info:', err)
     }
   }
 
@@ -114,11 +128,11 @@ function TrackerDetailPanel({ entry, onClose, onUpdate }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-live-bg overflow-y-auto shadow-2xl">
+      <div className="relative w-full max-w-lg max-h-[90vh] bg-live-bg rounded-xl shadow-2xl overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-live-bg border-b border-live-border px-6 py-4 flex justify-between items-start z-10">
+        <div className="sticky top-0 bg-live-bg border-b border-live-border px-6 py-4 flex justify-between items-start z-10 rounded-t-xl">
           <div>
             <h2 className="font-display text-lg font-semibold text-live-text">{entry.contact_name}</h2>
             {(entry.contact_position || entry.contact_company) && (
@@ -135,12 +149,12 @@ function TrackerDetailPanel({ entry, onClose, onUpdate }) {
           </button>
         </div>
 
-        <div className="px-6 py-6 space-y-6">
+        <div className="px-6 py-6 space-y-5 text-sm">
           {/* Status */}
           <div>
-            <label className="label">Status</label>
+            <label className="text-xs font-medium text-live-text-secondary uppercase tracking-wide mb-1 block">Status</label>
             <select
-              className="input w-full"
+              className="input w-full text-sm"
               value={status}
               onChange={(e) => handleStatusChange(e.target.value)}
             >
@@ -150,18 +164,44 @@ function TrackerDetailPanel({ entry, onClose, onUpdate }) {
             </select>
           </div>
 
+          {/* Contact Info */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-live-text-secondary uppercase tracking-wide mb-1 block">Email</label>
+              <input
+                type="email"
+                className="input w-full text-sm"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={handleSaveContactInfo}
+                placeholder="email@example.com"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-live-text-secondary uppercase tracking-wide mb-1 block">Phone</label>
+              <input
+                type="tel"
+                className="input w-full text-sm"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                onBlur={handleSaveContactInfo}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+          </div>
+
           {/* Log Engagement */}
           <div>
-            <label className="label">Log Engagement</label>
-            <div className="flex gap-2 items-end">
+            <label className="text-xs font-medium text-live-text-secondary uppercase tracking-wide mb-1 block">Log Engagement</label>
+            <div className="flex gap-2 items-stretch">
               <input
                 type="date"
-                className="input flex-1 text-sm"
+                className="input flex-[3] text-sm h-10"
                 value={logDate}
                 onChange={(e) => setLogDate(e.target.value)}
               />
               <select
-                className="input w-auto text-sm"
+                className="input flex-[2] text-sm h-10"
                 value={logType}
                 onChange={(e) => setLogType(e.target.value)}
               >
@@ -171,7 +211,7 @@ function TrackerDetailPanel({ entry, onClose, onUpdate }) {
               </select>
               <button
                 onClick={handleLogEngagement}
-                className="btn btn-primary text-sm px-3 py-2"
+                className="btn btn-primary text-sm px-4 h-10 whitespace-nowrap"
               >
                 Log
               </button>
@@ -181,13 +221,13 @@ function TrackerDetailPanel({ entry, onClose, onUpdate }) {
           {/* Engagement History */}
           {sortedLog.length > 0 && (
             <div>
-              <label className="label">Engagement History</label>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {sortedLog.map((entry, i) => (
+              <label className="text-xs font-medium text-live-text-secondary uppercase tracking-wide mb-1 block">Engagement History</label>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                {sortedLog.map((logEntry, i) => (
                   <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-live-bg-warm">
-                    <span className="text-xs text-live-text-secondary">{formatDate(entry.date)}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeBadgeColor(entry.type)}`}>
-                      {entry.type}
+                    <span className="text-xs text-live-text-secondary">{formatDate(logEntry.date)}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeBadgeColor(logEntry.type)}`}>
+                      {logEntry.type}
                     </span>
                   </div>
                 ))}
@@ -197,14 +237,14 @@ function TrackerDetailPanel({ entry, onClose, onUpdate }) {
 
           {/* Notes */}
           <div>
-            <label className="label">Notes</label>
+            <label className="text-xs font-medium text-live-text-secondary uppercase tracking-wide mb-1 block">Notes</label>
             <textarea
-              className="input w-full min-h-[100px] resize-y text-sm"
+              className="input w-full min-h-[80px] resize-y text-sm"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add notes about this contact..."
             />
-            <p className="text-xs text-live-text-secondary mt-1">Auto-saves after 1 second</p>
+            <p className="text-xs text-live-text-secondary mt-1 opacity-60">Auto-saves after 1 second</p>
           </div>
         </div>
       </div>
@@ -212,14 +252,54 @@ function TrackerDetailPanel({ entry, onClose, onUpdate }) {
   )
 }
 
-export default function TrackerTab({ sampleMode = false }) {
+export default function TrackerTab({ sampleMode = false, contacts = [] }) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState({ contact_name: '', contact_company: '', contact_position: '', notes: '' })
+  const [addMode, setAddMode] = useState('new') // 'new' | 'existing'
+  const [existingSearch, setExistingSearch] = useState('')
+  const [showExistingDropdown, setShowExistingDropdown] = useState(false)
+  const [form, setForm] = useState({ contact_name: '', contact_company: '', contact_position: '', contact_email: '', contact_phone: '', notes: '' })
   const [viewMode, setViewMode] = useState('list') // 'list' | 'board'
   const [selectedEntry, setSelectedEntry] = useState(null)
   const [activeDropId, setActiveDropId] = useState(null)
+  const existingDropdownRef = useRef(null)
+
+  // Close existing contact dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (existingDropdownRef.current && !existingDropdownRef.current.contains(e.target)) {
+        setShowExistingDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  // Filter contacts for autocomplete
+  const filteredExistingContacts = useMemo(() => {
+    if (!existingSearch.trim()) return contacts.slice(0, 50)
+    const q = existingSearch.toLowerCase()
+    return contacts
+      .filter(c =>
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.company || '').toLowerCase().includes(q) ||
+        (c.position || '').toLowerCase().includes(q)
+      )
+      .slice(0, 50)
+  }, [contacts, existingSearch])
+
+  const selectExistingContact = (c) => {
+    setForm(f => ({
+      ...f,
+      contact_name: c.name || '',
+      contact_company: c.company || '',
+      contact_position: c.position || '',
+      contact_email: c.email || '',
+    }))
+    setExistingSearch('')
+    setShowExistingDropdown(false)
+  }
 
   useEffect(() => {
     if (!sampleMode) loadEntries()
@@ -237,12 +317,18 @@ export default function TrackerTab({ sampleMode = false }) {
     }
   }
 
+  const resetForm = () => {
+    setForm({ contact_name: '', contact_company: '', contact_position: '', contact_email: '', contact_phone: '', notes: '' })
+    setAddMode('new')
+    setExistingSearch('')
+  }
+
   const handleAdd = async () => {
     if (!form.contact_name.trim()) return
     try {
       const data = await api.addToTracker(form)
       setEntries(prev => [data.entry, ...prev])
-      setForm({ contact_name: '', contact_company: '', contact_position: '', notes: '' })
+      resetForm()
       setShowAdd(false)
     } catch (err) {
       console.error('Failed to add:', err)
@@ -298,6 +384,9 @@ export default function TrackerTab({ sampleMode = false }) {
   const handleDragOver = (event) => {
     setActiveDropId(event.over?.id || null)
   }
+
+  // Require 5px movement before drag activates — lets clicks pass through to open modal
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const statusConfig = (statusId) => STATUSES.find(s => s.id === statusId) || STATUSES[0]
 
@@ -357,7 +446,7 @@ export default function TrackerTab({ sampleMode = false }) {
             </button>
           </div>
           <button
-            onClick={() => setShowAdd(!showAdd)}
+            onClick={() => { setShowAdd(!showAdd); if (showAdd) resetForm() }}
             className="btn btn-primary text-sm px-4 py-2"
           >
             + Add Contact
@@ -369,29 +458,133 @@ export default function TrackerTab({ sampleMode = false }) {
       {showAdd && (
         <div className="card mb-6">
           <div className="card-body">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+            {/* New / Existing toggle */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => { setAddMode('new'); resetForm(); setAddMode('new') }}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  addMode === 'new'
+                    ? 'bg-live-accent text-[#1a1a2e]'
+                    : 'bg-live-bg-warm text-live-text-secondary hover:text-live-text'
+                }`}
+              >
+                New Contact
+              </button>
+              <button
+                onClick={() => { setAddMode('existing'); setForm(f => ({ ...f, contact_name: '' })) }}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  addMode === 'existing'
+                    ? 'bg-live-accent text-[#1a1a2e]'
+                    : 'bg-live-bg-warm text-live-text-secondary hover:text-live-text'
+                }`}
+              >
+                Existing Contact
+              </button>
+            </div>
+
+            {addMode === 'existing' ? (
+              <>
+                {/* Existing contact autocomplete */}
+                <div ref={existingDropdownRef} className="relative mb-3">
+                  <input
+                    type="text"
+                    className="input w-full"
+                    value={form.contact_name || existingSearch}
+                    onChange={(e) => {
+                      setExistingSearch(e.target.value)
+                      setForm(f => ({ ...f, contact_name: '' }))
+                      setShowExistingDropdown(true)
+                    }}
+                    onFocus={() => { if (!form.contact_name) setShowExistingDropdown(true) }}
+                    placeholder="Search your LinkedIn contacts..."
+                  />
+                  {showExistingDropdown && !form.contact_name && (
+                    <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-live-surface border border-live-border rounded-lg shadow-lg">
+                      {filteredExistingContacts.length > 0 ? (
+                        filteredExistingContacts.map((c, i) => (
+                          <button
+                            key={i}
+                            onClick={() => selectExistingContact(c)}
+                            className="w-full text-left px-3 py-2 hover:bg-live-bg-warm transition-colors border-b border-live-border last:border-b-0"
+                          >
+                            <div className="font-medium text-sm text-live-text">{c.name}</div>
+                            <div className="text-xs text-live-text-secondary">
+                              {c.position}{c.company ? ` at ${c.company}` : ''}
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-4 text-sm text-live-text-secondary text-center">
+                          No contacts match "{existingSearch}"
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {form.contact_name && (
+                  <div className="p-3 bg-live-bg-warm rounded-lg border border-live-border mb-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium text-sm text-live-text">{form.contact_name}</p>
+                        <p className="text-xs text-live-text-secondary">
+                          {form.contact_position}{form.contact_company ? ` at ${form.contact_company}` : ''}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => { setForm(f => ({ ...f, contact_name: '', contact_company: '', contact_position: '', contact_email: '' })); setExistingSearch('') }}
+                        className="text-live-text-secondary hover:text-live-text text-sm leading-none p-1"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* New contact — manual entry */
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Contact name *"
+                  value={form.contact_name}
+                  onChange={(e) => setForm(f => ({ ...f, contact_name: e.target.value }))}
+                />
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Company"
+                  value={form.contact_company}
+                  onChange={(e) => setForm(f => ({ ...f, contact_company: e.target.value }))}
+                />
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Position"
+                  value={form.contact_position}
+                  onChange={(e) => setForm(f => ({ ...f, contact_position: e.target.value }))}
+                />
+              </div>
+            )}
+
+            {/* Email / Phone — shown for both modes */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
               <input
-                type="text"
+                type="email"
                 className="input"
-                placeholder="Contact name *"
-                value={form.contact_name}
-                onChange={(e) => setForm(f => ({ ...f, contact_name: e.target.value }))}
+                placeholder="Email"
+                value={form.contact_email}
+                onChange={(e) => setForm(f => ({ ...f, contact_email: e.target.value }))}
               />
               <input
-                type="text"
+                type="tel"
                 className="input"
-                placeholder="Company"
-                value={form.contact_company}
-                onChange={(e) => setForm(f => ({ ...f, contact_company: e.target.value }))}
-              />
-              <input
-                type="text"
-                className="input"
-                placeholder="Position"
-                value={form.contact_position}
-                onChange={(e) => setForm(f => ({ ...f, contact_position: e.target.value }))}
+                placeholder="Phone"
+                value={form.contact_phone}
+                onChange={(e) => setForm(f => ({ ...f, contact_phone: e.target.value }))}
               />
             </div>
+
             <textarea
               className="input w-full mb-3 resize-y"
               placeholder="Notes (optional)"
@@ -400,8 +593,8 @@ export default function TrackerTab({ sampleMode = false }) {
               onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
             />
             <div className="flex gap-2">
-              <button onClick={handleAdd} className="btn btn-primary text-sm px-4 py-2">Save</button>
-              <button onClick={() => setShowAdd(false)} className="btn text-sm px-4 py-2 border border-live-border">Cancel</button>
+              <button onClick={handleAdd} disabled={!form.contact_name.trim()} className="btn btn-primary text-sm px-4 py-2 disabled:opacity-50">Save</button>
+              <button onClick={() => { setShowAdd(false); resetForm() }} className="btn text-sm px-4 py-2 border border-live-border">Cancel</button>
             </div>
           </div>
         </div>
@@ -438,10 +631,23 @@ export default function TrackerTab({ sampleMode = false }) {
                         </span>
                       )}
                     </div>
-                    {(entry.contact_position || entry.contact_company) && (
+                    {entry.contact_position && (
                       <p className="text-xs text-live-text-secondary">
                         {entry.contact_position}{entry.contact_company ? ` at ${entry.contact_company}` : ''}
                       </p>
+                    )}
+                    {!entry.contact_position && entry.contact_company && (
+                      <p className="text-xs text-live-text-secondary">{entry.contact_company}</p>
+                    )}
+                    {(entry.contact_email || entry.contact_phone) && (
+                      <div className="flex gap-3 mt-1">
+                        {entry.contact_email && (
+                          <span className="text-xs text-live-text-secondary">{entry.contact_email}</span>
+                        )}
+                        {entry.contact_phone && (
+                          <span className="text-xs text-live-text-secondary">{entry.contact_phone}</span>
+                        )}
+                      </div>
                     )}
                     {entry.notes && (
                       <p className="text-xs text-live-text-secondary mt-1 line-clamp-2">{entry.notes}</p>
@@ -466,6 +672,7 @@ export default function TrackerTab({ sampleMode = false }) {
       ) : (
         /* Board View with Drag and Drop */
         <DndContext
+          sensors={sensors}
           collisionDetection={pointerWithin}
           onDragEnd={handleDragEnd}
           onDragOver={handleDragOver}
@@ -486,6 +693,9 @@ export default function TrackerTab({ sampleMode = false }) {
                       >
                         <div className="card-body py-2 px-3">
                           <p className="text-xs font-medium text-live-text truncate">{entry.contact_name}</p>
+                          {entry.contact_position && (
+                            <p className="text-xs text-live-text-secondary truncate">{entry.contact_position}</p>
+                          )}
                           {entry.contact_company && (
                             <p className="text-xs text-live-text-secondary truncate">{entry.contact_company}</p>
                           )}
@@ -512,9 +722,9 @@ export default function TrackerTab({ sampleMode = false }) {
         </DndContext>
       )}
 
-      {/* Detail Panel */}
+      {/* Detail Modal */}
       {selectedEntry && (
-        <TrackerDetailPanel
+        <TrackerDetailModal
           entry={selectedEntry}
           onClose={() => setSelectedEntry(null)}
           onUpdate={handleEntryUpdate}

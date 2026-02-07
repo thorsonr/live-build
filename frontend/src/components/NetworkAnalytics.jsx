@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Chart from 'chart.js/auto'
 import ContactGrid from './ContactGrid'
-import OutreachDrafter from './OutreachDrafter'
 import StrategyAnalysis from './StrategyAnalysis'
 import AIInsightCard, { stripMarkdown } from './AIInsightCard'
 import MessageGenerator from './MessageGenerator'
@@ -79,7 +78,25 @@ function SampleCTAModal({ onClose }) {
 export default function NetworkAnalytics({ data, activeTab, user, settings, profile, onExportCSV, sampleMode = false, sampleMessages = null, onNavigate }) {
   const { contacts, analytics, aiAnalysis } = data
   const [selectedContact, setSelectedContact] = useState(null)
+  const [preselectedContact, setPreselectedContact] = useState(null)
   const [showStrategy, setShowStrategy] = useState(false)
+
+  // Navigate to Messages tab with a pre-selected contact
+  const handleDraftOutreach = (contact) => {
+    if (sampleMode) {
+      setSelectedContact(contact)
+      return
+    }
+    setPreselectedContact({
+      name: contact.name || '',
+      position: contact.position || '',
+      company: contact.company || '',
+      relationship: contact.relStrength || 'unknown',
+      isDormant: contact.isDormant || false,
+      messageCount: contact.messageCount || 0,
+    })
+    if (onNavigate) onNavigate('messages')
+  }
 
   // Helper to safely access AI screen data
   const ai = (screenKey) => aiAnalysis?.screens?.[screenKey] || null
@@ -112,13 +129,15 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, prof
           data={data}
           settings={settings}
           profile={profile}
+          preselectedContact={preselectedContact}
+          onPreselectedConsumed={() => setPreselectedContact(null)}
           sampleMode={sampleMode}
           sampleMessages={sampleMessages}
         />
       )}
       {activeTab === 'tracker' && (
         settings?.show_tracker ? (
-          <TrackerTab sampleMode={sampleMode} />
+          <TrackerTab sampleMode={sampleMode} contacts={contacts} />
         ) : (
           <div>
             <div className="section-label">Engagement Tracker</div>
@@ -158,13 +177,10 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, prof
               </button>
             )}
           </div>
-          <ContactGrid contacts={contacts} onSelectContact={setSelectedContact} settings={settings} />
+          <ContactGrid contacts={contacts} onSelectContact={handleDraftOutreach} settings={settings} />
         </div>
       )}
 
-      {selectedContact && !sampleMode && (
-        <OutreachDrafter contact={selectedContact} onClose={() => setSelectedContact(null)} />
-      )}
       {selectedContact && sampleMode && (
         <SampleCTAModal onClose={() => setSelectedContact(null)} />
       )}

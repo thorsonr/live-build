@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { api } from '../lib/api'
 
-export default function MessageGenerator({ data, settings, profile, sampleMode = false, sampleMessages = null }) {
+export default function MessageGenerator({ data, settings, profile, preselectedContact, onPreselectedConsumed, sampleMode = false, sampleMessages = null }) {
   const [mode, setMode] = useState('recommended') // 'recommended' | 'other'
   const [selectedContact, setSelectedContact] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -16,6 +16,18 @@ export default function MessageGenerator({ data, settings, profile, sampleMode =
   const [trackerAdded, setTrackerAdded] = useState({})
   const dropdownRef = useRef(null)
   const inputRef = useRef(null)
+
+  // Handle preselected contact from Contacts tab
+  useEffect(() => {
+    if (preselectedContact) {
+      setMode('other')
+      setSelectedContact(preselectedContact)
+      setMessages(null)
+      setSearchQuery('')
+      setShowDropdown(false)
+      if (onPreselectedConsumed) onPreselectedConsumed()
+    }
+  }, [preselectedContact])
 
   // Close dropdown on outside click
   useEffect(() => {
