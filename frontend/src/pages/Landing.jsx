@@ -305,13 +305,33 @@ export default function Landing() {
         </div>
       </div>
 
-      <div className="text-center mt-16">
+      {/* Beta Notice */}
+      <div className="card mb-12 border-live-border">
+        <div className="card-body p-6 text-center">
+          <p className="text-sm text-live-text-secondary">
+            <strong className="text-live-text">Beta Notice:</strong>{' '}
+            LiVE Pro is currently in beta. Features may change, outputs may be imperfect, and availability
+            is not guaranteed. We welcome feedback at{' '}
+            <a href="mailto:hello@robertthorson.com" className="text-live-info hover:underline">hello@robertthorson.com</a>.
+          </p>
+          <p className="text-xs text-live-text-secondary mt-2">
+            LiVE Pro is not affiliated with or endorsed by LinkedIn Corporation.
+          </p>
+        </div>
+      </div>
+
+      <div className="text-center">
         <p className="text-sm text-live-text-secondary mb-4">
           Questions? <a href="mailto:hello@robertthorson.com" className="text-live-info hover:underline">Contact us</a>
         </p>
-        <p className="text-xs text-live-text-secondary">
+        <p className="text-xs text-live-text-secondary mb-4">
           Need an invite code? <a href="mailto:hello@robertthorson.com?subject=LiVE%20Pro%20beta%20invite%20request" className="text-live-info hover:underline">Request early access</a>
         </p>
+        <div className="flex justify-center gap-4 text-xs text-live-text-secondary">
+          <Link to="/privacy" className="hover:text-live-info hover:underline">Privacy Policy</Link>
+          <span>|</span>
+          <Link to="/terms" className="hover:text-live-info hover:underline">Terms of Service</Link>
+        </div>
       </div>
     </main>
   )

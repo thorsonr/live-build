@@ -11,6 +11,7 @@ export default function Signup() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -20,6 +21,12 @@ export default function Signup() {
     // Require invite code
     if (!inviteCode.trim()) {
       setError('An invite code is required to sign up. Contact us to request access.')
+      setLoading(false)
+      return
+    }
+
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service and Privacy Policy to continue.')
       setLoading(false)
       return
     }
@@ -161,10 +168,24 @@ export default function Signup() {
                 At least 10 characters, with uppercase, lowercase, and a number
               </p>
             </div>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 rounded border-live-border"
+              />
+              <span className="text-xs text-live-text-secondary">
+                I agree to the{' '}
+                <Link to="/terms" className="text-live-info hover:underline" target="_blank">Terms of Service</Link>
+                {' '}and{' '}
+                <Link to="/privacy" className="text-live-info hover:underline" target="_blank">Privacy Policy</Link>
+              </span>
+            </label>
             <button
               type="submit"
               className="btn btn-primary w-full"
-              disabled={loading}
+              disabled={loading || !agreedToTerms}
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
@@ -175,10 +196,6 @@ export default function Signup() {
             <Link to="/login" className="text-live-info hover:underline">
               Sign in
             </Link>
-          </p>
-
-          <p className="mt-4 text-center text-xs text-live-text-secondary">
-            By signing up, you agree to our Terms of Service and Privacy Policy
           </p>
         </div>
       </div>

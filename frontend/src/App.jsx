@@ -14,6 +14,8 @@ import Settings from './pages/Settings'
 import Admin from './pages/Admin'
 import ResetPassword from './pages/ResetPassword'
 import SampleDashboard from './pages/SampleDashboard'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 
 function ProtectedRoute({ children, user }) {
   if (!user) {
@@ -108,6 +110,8 @@ function App() {
           }
         />
           <Route path="/sample" element={<SampleDashboard />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           </Routes>
           {user && settings?.chat_enabled && <ChatBubble settings={settings} />}
