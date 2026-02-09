@@ -34,7 +34,6 @@ export default function Terms() {
                 <li>You must be at least 18 years old to use LiVE Pro</li>
                 <li>You must provide accurate account information</li>
                 <li>You are responsible for maintaining the security of your account credentials</li>
-                <li>An invite code is required during the beta period</li>
               </ul>
             </section>
 
@@ -85,6 +84,7 @@ export default function Terms() {
                 <li>Use the Service for mass automated outreach, spam, or harassment</li>
                 <li>Reverse engineer, scrape, or extract data from the Service</li>
                 <li>Resell or redistribute AI-generated content commercially without attribution</li>
+                <li>Use the Service for commercial purposes without a commercial license — LiVE Pro is for personal, individual use only. Commercial licenses are available by contacting <a href="mailto:hello@robertthorson.com" className="text-live-info hover:underline">hello@robertthorson.com</a></li>
                 <li>Attempt to circumvent usage limits, rate limits, or security measures</li>
               </ul>
             </section>
@@ -127,7 +127,9 @@ export default function Terms() {
               <p>
                 We reserve the right to suspend or terminate your account at any time for violation
                 of these terms, abuse of the Service, or any other reason at our discretion.
-                You may delete your data and stop using the Service at any time.
+                You may delete your account and all associated data at any time through the Settings menu
+                in your account, or by emailing{' '}
+                <a href="mailto:hello@robertthorson.com" className="text-live-info hover:underline">hello@robertthorson.com</a>.
               </p>
             </section>
 

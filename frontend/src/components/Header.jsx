@@ -40,12 +40,6 @@ export default function Header({ user, settings }) {
                   {syncing ? 'Saving...' : '☁️ Save'}
                 </button>
               )}
-              <button
-                onClick={() => setShowFeedback(true)}
-                className="text-sm opacity-80 hover:opacity-100 transition-opacity"
-              >
-                Feedback
-              </button>
               <Link
                 to="/dashboard"
                 className="text-sm opacity-80 hover:opacity-100 transition-opacity"
@@ -66,6 +60,12 @@ export default function Header({ user, settings }) {
                   Admin
                 </Link>
               )}
+              <button
+                onClick={() => setShowFeedback(true)}
+                className="text-sm opacity-80 hover:opacity-100 transition-opacity"
+              >
+                Feedback
+              </button>
               <button
                 onClick={handleLogout}
                 className="text-sm px-4 py-2 rounded-lg border border-white/20 hover:bg-white/10 transition-colors"

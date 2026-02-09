@@ -184,7 +184,7 @@ export function buildIngestionPrompt(dataSummary, userContext) {
   let userMessage = ''
 
   if (userContext) {
-    userMessage += `## About This User\n\n${userContext}\n\n---\n\n`
+    userMessage += `## About This User\n\nIMPORTANT: Tailor ALL insights, priorities, and recommendations to this user's specific situation:\n\n${userContext}\n\n---\n\n`
   }
 
   userMessage += `## LinkedIn Data Export\n\n`

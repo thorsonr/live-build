@@ -82,7 +82,7 @@ router.post('/signup', async (req, res, next) => {
 
     // Create users table row for every signup
     if (authData.user?.id) {
-      await supabaseAdmin
+      const { error: upsertError } = await supabaseAdmin
         .from('users')
         .upsert({
           id: authData.user.id,
@@ -90,6 +90,9 @@ router.post('/signup', async (req, res, next) => {
           first_name: first_name?.trim().slice(0, 100) || null,
           last_name: last_name?.trim().slice(0, 100) || null,
         }, { onConflict: 'id' })
+      if (upsertError) {
+        console.error('Failed to create user row:', upsertError.message)
+      }
     }
 
     // Redeem invite code if provided

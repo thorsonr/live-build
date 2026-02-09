@@ -288,6 +288,25 @@ router.get('/ai-usage', requireAdmin, async (req, res, next) => {
   }
 })
 
+// Get all feedback (admin only)
+router.get('/feedback', requireAdmin, async (req, res, next) => {
+  try {
+    const { data: feedback, error } = await supabaseAdmin
+      .from('feedback')
+      .select('id, user_id, email, category, message, page_url, created_at')
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({ feedback: feedback || [] })
+  } catch (err) {
+    next(err)
+  }
+})
+
 // Get AI platform config
 router.get('/ai-config', requireAdmin, async (req, res, next) => {
   try {
@@ -312,7 +331,7 @@ router.get('/ai-config', requireAdmin, async (req, res, next) => {
 })
 
 // Update AI platform config
-const ALLOWED_CONFIG_KEYS = ['ai_model', 'max_connections', 'max_shares', 'max_tokens']
+const ALLOWED_CONFIG_KEYS = ['ai_model', 'ai_model_first_analysis', 'ai_model_analysis', 'ai_model_chat', 'ai_model_outreach', 'max_connections', 'max_shares', 'max_tokens']
 
 router.put('/ai-config', requireAdmin, async (req, res, next) => {
   try {

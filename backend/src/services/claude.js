@@ -15,12 +15,13 @@ const MODEL_MAX_TOKENS = {
 }
 
 // Read AI model + maxTokens from platform_config table
+// Returns per-feature model overrides when available
 async function getAIConfig() {
   try {
     const { data: configs } = await supabaseAdmin
       .from('platform_config')
       .select('key, value')
-      .in('key', ['ai_model', 'max_tokens'])
+      .in('key', ['ai_model', 'ai_model_first_analysis', 'ai_model_analysis', 'ai_model_chat', 'ai_model_outreach', 'max_tokens'])
 
     const configMap = {}
     ;(configs || []).forEach(c => {
@@ -28,13 +29,26 @@ async function getAIConfig() {
       catch { configMap[c.key] = c.value }
     })
 
+    const defaultModel = (typeof configMap.ai_model === 'string' ? configMap.ai_model : null) || DEFAULT_MODEL
+
     return {
-      model: (typeof configMap.ai_model === 'string' ? configMap.ai_model : null) || DEFAULT_MODEL,
+      model: defaultModel,
+      firstAnalysisModel: (typeof configMap.ai_model_first_analysis === 'string' ? configMap.ai_model_first_analysis : null) || defaultModel,
+      analysisModel: (typeof configMap.ai_model_analysis === 'string' ? configMap.ai_model_analysis : null) || defaultModel,
+      chatModel: (typeof configMap.ai_model_chat === 'string' ? configMap.ai_model_chat : null) || DEFAULT_MODEL,
+      outreachModel: (typeof configMap.ai_model_outreach === 'string' ? configMap.ai_model_outreach : null) || DEFAULT_MODEL,
       maxTokens: parseInt(configMap.max_tokens) || DEFAULT_MAX_TOKENS,
     }
   } catch (e) {
     console.warn('Could not read platform_config, using defaults:', e.message)
-    return { model: DEFAULT_MODEL, maxTokens: DEFAULT_MAX_TOKENS }
+    return {
+      model: DEFAULT_MODEL,
+      firstAnalysisModel: DEFAULT_MODEL,
+      analysisModel: DEFAULT_MODEL,
+      chatModel: DEFAULT_MODEL,
+      outreachModel: DEFAULT_MODEL,
+      maxTokens: DEFAULT_MAX_TOKENS,
+    }
   }
 }
 
@@ -60,49 +74,42 @@ async function getUserAPIKey(userId) {
 
 /**
  * Get the correct model + maxTokens for a feature based on user tier.
- * ai_chat → always Haiku, max_tokens 2048
- * Free trial + analysis → force Haiku
- * Paid + analysis → force Sonnet
- * BYOK + analysis → user's preferred_model
+ * Uses per-feature platform config: ai_model_first_analysis, ai_model_analysis, ai_model_chat, ai_model_outreach
+ * BYOK users use their preferred_model. Admin forced_model overrides everything.
  */
 export async function getModelForFeature(userId, feature) {
   const tier = await getUserTier(userId)
+  const platformConfig = await getAIConfig()
 
-  // Chat always uses Haiku
+  // Chat: use platform chat model config
   if (feature === 'ai_chat') {
     return {
-      model: 'claude-haiku-4-5-20251001',
+      model: tier.tier === 'byok' ? (await getPreferredModel(userId, tier)) || platformConfig.chatModel : platformConfig.chatModel,
       maxTokens: 2048,
       apiKey: await getUserAPIKey(userId),
     }
   }
 
-  // Outreach message generation uses Haiku
+  // Outreach message generation: use platform outreach model config
   if (feature === 'outreach_message') {
     return {
-      model: 'claude-haiku-4-5-20251001',
+      model: tier.tier === 'byok' ? (await getPreferredModel(userId, tier)) || platformConfig.outreachModel : platformConfig.outreachModel,
       maxTokens: 2048,
       apiKey: await getUserAPIKey(userId),
     }
   }
 
-  // Analysis features: model depends on tier
+  // Analysis features: check if this is the user's first analysis
   let model
   if (tier.tier === 'byok') {
-    // BYOK: use preferred_model or tier's forced model
-    const { data: user } = await supabaseAdmin
-      .from('users')
-      .select('preferred_model')
-      .eq('id', userId)
-      .single()
-    const platformConfig = await getAIConfig()
-    model = tier.analysis_model || user?.preferred_model || platformConfig.model
+    model = (await getPreferredModel(userId, tier)) || platformConfig.analysisModel
   } else if (tier.analysis_model) {
-    // Tier-enforced model (or admin override via forced_model)
+    // Admin forced_model override (via tier config)
     model = tier.analysis_model
   } else {
-    const platformConfig = await getAIConfig()
-    model = platformConfig.model
+    // Detect first vs subsequent analysis for platform model selection
+    const isFirst = await isFirstAnalysis(userId)
+    model = isFirst ? platformConfig.firstAnalysisModel : platformConfig.analysisModel
   }
 
   return {
@@ -110,6 +117,38 @@ export async function getModelForFeature(userId, feature) {
     maxTokens: MODEL_MAX_TOKENS[model] || DEFAULT_MAX_TOKENS,
     apiKey: await getUserAPIKey(userId),
   }
+}
+
+// Helper: get BYOK user's preferred model (or forced model from admin)
+async function getPreferredModel(userId, tier) {
+  if (tier.analysis_model) return tier.analysis_model // admin forced_model
+  const { data: user } = await supabaseAdmin
+    .from('users')
+    .select('preferred_model')
+    .eq('id', userId)
+    .single()
+  return user?.preferred_model || null
+}
+
+// Helper: check if user has any prior full_analysis usage
+async function isFirstAnalysis(userId) {
+  const monthYear = new Date().toISOString().slice(0, 7)
+  const { data: quota } = await supabaseAdmin
+    .from('usage_quotas')
+    .select('analysis_calls_used')
+    .eq('user_id', userId)
+    .eq('month_year', monthYear)
+    .single()
+
+  // Also check if they have any archives (previous months)
+  if (quota && quota.analysis_calls_used > 0) return false
+
+  const { count } = await supabaseAdmin
+    .from('analysis_archives')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  return (count || 0) === 0
 }
 
 export async function generateFullAnalysis({ dataSummary, userContext, userId }) {

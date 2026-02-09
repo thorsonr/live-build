@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 
 export default function Signup() {
   const [firstName, setFirstName] = useState('')
@@ -39,20 +39,14 @@ export default function Signup() {
     }
 
     try {
-      // Sign up with Supabase Auth
-      const { data, error } = await supabase.auth.signUp({
+      // Sign up via backend (creates auth user + public.users row + redeems invite code)
+      await api.signup({
         email,
         password,
-        options: {
-          data: {
-            ...(inviteCode.trim() ? { invite_code: inviteCode.trim() } : {}),
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-          },
-        },
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        invite_code: inviteCode.trim() || undefined,
       })
-
-      if (error) throw error
 
       // Show success message for email verification
       setSuccess(true)

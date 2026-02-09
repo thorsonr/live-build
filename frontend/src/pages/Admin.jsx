@@ -28,6 +28,9 @@ export default function Admin({ user }) {
   const [aiConfig, setAiConfig] = useState({})
   const [savingModel, setSavingModel] = useState(false)
 
+  // Feedback tab state
+  const [feedback, setFeedback] = useState([])
+
   useEffect(() => {
     loadData()
   }, [activeTab])
@@ -52,6 +55,9 @@ export default function Admin({ user }) {
         ])
         setAiUsage(usageData)
         setAiConfig(configData.config || {})
+      } else if (activeTab === 'feedback') {
+        const data = await api.getAdminFeedback()
+        setFeedback(data.feedback || [])
       }
     } catch (err) {
       setError('Failed to load data. Make sure you have admin access.')
@@ -78,11 +84,11 @@ export default function Admin({ user }) {
     navigator.clipboard.writeText(code)
   }
 
-  const handleModelChange = async (newModel) => {
+  const handleModelChange = async (configKey, newModel) => {
     setSavingModel(true)
     try {
-      await api.updateAdminAIConfig({ key: 'ai_model', value: newModel })
-      setAiConfig(prev => ({ ...prev, ai_model: newModel }))
+      await api.updateAdminAIConfig({ key: configKey, value: newModel })
+      setAiConfig(prev => ({ ...prev, [configKey]: newModel }))
     } catch (err) {
       setError('Failed to update model')
     } finally {
@@ -115,6 +121,7 @@ export default function Admin({ user }) {
   const tabs = [
     { id: 'ai', label: 'AI' },
     { id: 'users', label: 'Users' },
+    { id: 'feedback', label: 'Feedback' },
     { id: 'codes', label: 'Invite Codes' },
     { id: 'analytics', label: 'Analytics' },
   ]
@@ -131,8 +138,15 @@ export default function Admin({ user }) {
     return tokens.toString()
   }
 
-  const currentModel = aiConfig.ai_model || 'claude-sonnet-4-20250514'
+  const currentModel = aiConfig.ai_model || 'claude-haiku-4-5-20251001'
   const currentModelLabel = MODEL_OPTIONS.find(m => m.value === currentModel)?.label || currentModel
+
+  const MODEL_CONFIG_FIELDS = [
+    { key: 'ai_model_first_analysis', label: 'First Analysis', description: 'Model for a user\'s very first network analysis', fallback: currentModel },
+    { key: 'ai_model_analysis', label: 'Subsequent Analyses', description: 'Model for repeat analyses', fallback: currentModel },
+    { key: 'ai_model_chat', label: 'AI Chat', description: 'Model for AI chat questions', fallback: 'claude-haiku-4-5-20251001' },
+    { key: 'ai_model_outreach', label: 'Message Generation', description: 'Model for outreach message drafting', fallback: 'claude-haiku-4-5-20251001' },
+  ]
 
   return (
     <main className="max-w-6xl mx-auto px-4 md:px-8 py-8">
@@ -373,6 +387,52 @@ export default function Admin({ user }) {
             </div>
           )}
 
+          {/* Feedback Tab */}
+          {activeTab === 'feedback' && (
+            <div className="card">
+              <div className="card-header">User Feedback ({feedback.length})</div>
+              <div className="card-body overflow-x-auto">
+                {feedback.length === 0 ? (
+                  <p className="py-8 text-center text-live-text-secondary">No feedback submitted yet.</p>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-xs uppercase text-live-text-secondary border-b border-live-border">
+                        <th className="pb-3 pr-4">Date</th>
+                        <th className="pb-3 pr-4">Email</th>
+                        <th className="pb-3 pr-4">Category</th>
+                        <th className="pb-3 pr-4">Message</th>
+                        <th className="pb-3">Page</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {feedback.map(f => (
+                        <tr key={f.id} className="border-b border-live-border align-top">
+                          <td className="py-3 pr-4 whitespace-nowrap">{new Date(f.created_at).toLocaleDateString()}</td>
+                          <td className="py-3 pr-4 text-xs">{f.email || '—'}</td>
+                          <td className="py-3 pr-4">
+                            <span className={`badge ${
+                              f.category === 'bug' ? 'badge-danger' :
+                              f.category === 'feature' ? 'badge-info' :
+                              f.category === 'ai' ? 'badge-accent' :
+                              'badge-success'
+                            }`}>
+                              {f.category || 'general'}
+                            </span>
+                          </td>
+                          <td className="py-3 pr-4 max-w-md">
+                            <p className="whitespace-pre-wrap break-words">{f.message}</p>
+                          </td>
+                          <td className="py-3 text-xs text-live-text-secondary">{f.page_url ? new URL(f.page_url).pathname : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Analytics Tab */}
           {activeTab === 'analytics' && analytics && (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -444,19 +504,24 @@ export default function Admin({ user }) {
               <div className="grid md:grid-cols-2 gap-4 mb-6">
                 <div className="card">
                   <div className="card-header">Model Configuration</div>
-                  <div className="card-body">
-                    <label className="label mb-2">Active Model</label>
-                    <select
-                      className="input w-full"
-                      value={currentModel}
-                      onChange={(e) => handleModelChange(e.target.value)}
-                      disabled={savingModel}
-                    >
-                      {MODEL_OPTIONS.map(m => (
-                        <option key={m.value} value={m.value}>{m.label}</option>
-                      ))}
-                    </select>
-                    {savingModel && <p className="text-xs text-live-text-secondary mt-2">Saving...</p>}
+                  <div className="card-body space-y-4">
+                    {MODEL_CONFIG_FIELDS.map(field => (
+                      <div key={field.key}>
+                        <label className="label mb-1">{field.label}</label>
+                        <select
+                          className="input w-full"
+                          value={aiConfig[field.key] || field.fallback}
+                          onChange={(e) => handleModelChange(field.key, e.target.value)}
+                          disabled={savingModel}
+                        >
+                          {MODEL_OPTIONS.map(m => (
+                            <option key={m.value} value={m.value}>{m.label}</option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-live-text-secondary mt-0.5">{field.description}</p>
+                      </div>
+                    ))}
+                    {savingModel && <p className="text-xs text-live-text-secondary">Saving...</p>}
                   </div>
                 </div>
 
