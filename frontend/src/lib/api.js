@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
 async function request(endpoint, options = {}) {
   // Get token from Supabase session

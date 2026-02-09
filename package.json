@@ -2,6 +2,10 @@
   "name": "live-pro",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
+    "start": "cd backend && node src/index.js"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.73.0",
     "dotenv": "^17.2.4",

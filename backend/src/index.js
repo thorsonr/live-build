@@ -3,6 +3,9 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import fs from 'fs'
 import authRoutes from './routes/auth.js'
 import dataRoutes from './routes/data.js'
 import aiRoutes from './routes/ai.js'
@@ -12,8 +15,11 @@ import settingsRoutes from './routes/settings.js'
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// Security headers
-app.use(helmet())
+// Security headers — relax CSP for serving SPA frontend
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}))
 
 // CORS — supports comma-separated origins for multi-environment
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
@@ -60,6 +66,20 @@ app.use('/api/data', dataRoutes)
 app.use('/api/ai', aiLimiter, aiRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/settings', settingsRoutes)
+
+// Serve frontend static files in production/staging
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const frontendDist = path.join(__dirname, '../../frontend/dist')
+
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist))
+
+  // SPA catch-all — serve index.html for non-API routes
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/') || req.path === '/health') return next()
+    res.sendFile(path.join(frontendDist, 'index.html'))
+  })
+}
 
 // Error handling — don't leak internals in production
 app.use((err, req, res, next) => {
