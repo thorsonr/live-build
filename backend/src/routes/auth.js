@@ -35,34 +35,34 @@ router.post('/signup', async (req, res, next) => {
       return res.status(400).json({ error: 'Email and password required' })
     }
 
-    // Require invite code
-    if (!invite_code || !invite_code.trim()) {
-      return res.status(400).json({ error: 'An invite code is required to sign up.' })
-    }
-
     // Validate password strength
     const passwordError = validatePassword(password)
     if (passwordError) {
       return res.status(400).json({ error: passwordError })
     }
 
-    // Validate invite code before creating user
-    const { data: code, error: codeError } = await supabaseAdmin
-      .from('invite_codes')
-      .select('*')
-      .eq('code', invite_code.trim())
-      .single()
+    // Validate invite code if provided (optional)
+    let code = null
+    if (invite_code && invite_code.trim()) {
+      const { data: codeData, error: codeError } = await supabaseAdmin
+        .from('invite_codes')
+        .select('*')
+        .eq('code', invite_code.trim())
+        .single()
 
-    if (codeError || !code) {
-      return res.status(400).json({ error: 'Invalid invite code' })
-    }
+      if (codeError || !codeData) {
+        return res.status(400).json({ error: 'Invalid invite code' })
+      }
 
-    if (code.use_count >= code.max_uses) {
-      return res.status(400).json({ error: 'Invite code has been fully redeemed' })
-    }
+      if (codeData.use_count >= codeData.max_uses) {
+        return res.status(400).json({ error: 'Invite code has been fully redeemed' })
+      }
 
-    if (new Date(code.expires_at) < new Date()) {
-      return res.status(400).json({ error: 'Invite code has expired' })
+      if (new Date(codeData.expires_at) < new Date()) {
+        return res.status(400).json({ error: 'Invite code has expired' })
+      }
+
+      code = codeData
     }
 
     // Create user with Supabase Auth
@@ -71,7 +71,7 @@ router.post('/signup', async (req, res, next) => {
       password,
       options: {
         data: {
-          invite_code: invite_code.trim(),
+          ...(invite_code ? { invite_code: invite_code.trim() } : {}),
         }
       }
     })
@@ -80,8 +80,8 @@ router.post('/signup', async (req, res, next) => {
       return res.status(400).json({ error: authError.message })
     }
 
-    // Save first/last name to users table
-    if (authData.user?.id && (first_name || last_name)) {
+    // Create users table row for every signup
+    if (authData.user?.id) {
       await supabaseAdmin
         .from('users')
         .upsert({
@@ -92,8 +92,8 @@ router.post('/signup', async (req, res, next) => {
         }, { onConflict: 'id' })
     }
 
-    // Atomically redeem invite code via RPC (prevents race condition)
-    if (authData.user?.id) {
+    // Redeem invite code if provided
+    if (invite_code && invite_code.trim() && authData.user?.id && code) {
       const { data: redeemResult, error: redeemError } = await supabaseAdmin
         .rpc('redeem_invite_code', {
           p_code: invite_code.trim(),
@@ -192,6 +192,43 @@ router.get('/me', requireAuth, async (req, res, next) => {
   }
 })
 
+// Delete account (soft-delete: keeps user row with 'deleted' status)
+router.delete('/account', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id
+
+    // Delete all user data (same as /api/data/all)
+    await supabaseAdmin.from('ai_insights').delete().eq('user_id', userId)
+    await supabaseAdmin.from('connections').delete().eq('user_id', userId)
+    await supabaseAdmin.from('network_analysis').delete().eq('user_id', userId)
+    await supabaseAdmin.from('usage_quotas').delete().eq('user_id', userId)
+    await supabaseAdmin.from('custom_categories').delete().eq('user_id', userId)
+    await supabaseAdmin.from('engagement_tracker').delete().eq('user_id', userId)
+    await supabaseAdmin.from('analysis_archives').delete().eq('user_id', userId)
+
+    // Soft-delete: clear sensitive fields but keep the row for billing audit
+    await supabaseAdmin
+      .from('users')
+      .update({
+        subscription_status: 'deleted',
+        api_key_encrypted: null,
+        preferred_model: null,
+        first_name: null,
+        last_name: null,
+      })
+      .eq('id', userId)
+
+    // Disable the Supabase Auth user so they can't sign in
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      ban_duration: '876600h', // ~100 years
+    })
+
+    res.json({ success: true })
+  } catch (err) {
+    next(err)
+  }
+})
+
 // Password reset request
 router.post('/reset-password', async (req, res, next) => {
   try {
@@ -201,8 +238,10 @@ router.post('/reset-password', async (req, res, next) => {
       return res.status(400).json({ error: 'Email required' })
     }
 
+    // Handle comma-separated FRONTEND_URL (take the first one)
+    const frontendUrl = (process.env.FRONTEND_URL || '').split(',')[0].trim()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.FRONTEND_URL}/reset-password`,
+      redirectTo: `${frontendUrl}/reset-password`,
     })
 
     if (error) {

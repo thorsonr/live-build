@@ -143,4 +143,99 @@ router.patch('/', requireAuth, async (req, res, next) => {
   }
 })
 
+// Redeem an invite code (for existing users)
+router.post('/redeem-code', requireAuth, async (req, res, next) => {
+  try {
+    const { code: inviteCode } = req.body
+
+    if (!inviteCode || !inviteCode.trim()) {
+      return res.status(400).json({ error: 'Invite code is required' })
+    }
+
+    // Look up the code
+    const { data: codeData, error: codeError } = await supabaseAdmin
+      .from('invite_codes')
+      .select('*')
+      .eq('code', inviteCode.trim())
+      .single()
+
+    if (codeError || !codeData) {
+      return res.status(400).json({ error: 'Invalid invite code' })
+    }
+
+    if (codeData.use_count >= codeData.max_uses) {
+      return res.status(400).json({ error: 'Invite code has been fully redeemed' })
+    }
+
+    if (new Date(codeData.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'Invite code has expired' })
+    }
+
+    // Try RPC first, fallback to manual update
+    const { error: redeemError } = await supabaseAdmin
+      .rpc('redeem_invite_code', {
+        p_code: inviteCode.trim(),
+        p_user_id: req.user.id,
+      })
+
+    if (redeemError) {
+      console.error('Failed to redeem invite code via RPC, using fallback:', redeemError.message)
+      await supabaseAdmin
+        .from('invite_codes')
+        .update({
+          use_count: codeData.use_count + 1,
+          redeemed_by: req.user.id,
+          redeemed_at: new Date().toISOString(),
+        })
+        .eq('code', inviteCode.trim())
+        .eq('use_count', codeData.use_count)
+    }
+
+    // Apply bonus analyses if any
+    if (codeData.bonus_analyses > 0) {
+      await supabaseAdmin
+        .from('users')
+        .update({ analysis_limit_override: codeData.bonus_analyses })
+        .eq('id', req.user.id)
+    }
+
+    res.json({ success: true, bonus_analyses: codeData.bonus_analyses || 0 })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Submit feedback
+router.post('/feedback', requireAuth, async (req, res, next) => {
+  try {
+    const { category, message, page_url } = req.body
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Message is required' })
+    }
+
+    if (message.length > 2000) {
+      return res.status(400).json({ error: 'Message must be under 2000 characters' })
+    }
+
+    const { error } = await supabaseAdmin
+      .from('feedback')
+      .insert({
+        user_id: req.user.id,
+        email: req.user.email,
+        category: category || 'general',
+        message: message.trim(),
+        page_url: page_url || null,
+      })
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({ success: true })
+  } catch (err) {
+    next(err)
+  }
+})
+
 export default router

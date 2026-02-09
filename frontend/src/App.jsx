@@ -80,6 +80,11 @@ function App() {
     <ThemeProvider>
       <DataProvider>
         <div className="min-h-screen bg-live-bg transition-colors">
+          {import.meta.env.VITE_API_URL?.includes('staging') && (
+            <div className="bg-amber-500 text-black text-center py-1 text-xs font-semibold">
+              STAGING ENVIRONMENT
+            </div>
+          )}
           <Header user={user} settings={settings} />
           <Routes>
         <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />

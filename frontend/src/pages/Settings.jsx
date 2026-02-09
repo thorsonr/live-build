@@ -44,6 +44,11 @@ export default function Settings({ user, settings, onSettingsChange }) {
   const [lastName, setLastName] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [redeemCode, setRedeemCode] = useState('')
+  const [redeemLoading, setRedeemLoading] = useState(false)
+  const [redeemMessage, setRedeemMessage] = useState('')
+  const [redeemError, setRedeemError] = useState('')
 
   const tier = settings?.tier || 'trial'
   const showByok = settings?.show_byok !== false
@@ -168,6 +173,54 @@ export default function Settings({ user, settings, onSettingsChange }) {
     }
   }
 
+  const handleDeleteAccount = async () => {
+    if (!confirm('DELETE YOUR ACCOUNT? This will permanently erase all your data and disable your account. This cannot be undone.')) {
+      return
+    }
+    if (!confirm('Are you absolutely sure? You will not be able to sign back in after this.')) {
+      return
+    }
+
+    setDeletingAccount(true)
+    try {
+      await api.deleteAccount()
+      localStorage.removeItem('live_contacts')
+      clearData()
+      // Sign out on the client side
+      const { supabase } = await import('../lib/supabase')
+      await supabase.auth.signOut()
+      navigate('/')
+    } catch (err) {
+      setMessage('Failed to delete account: ' + (err.message || 'Unknown error'))
+      setDeletingAccount(false)
+    }
+  }
+
+  const handleRedeemCode = async () => {
+    if (!redeemCode.trim()) return
+    setRedeemLoading(true)
+    setRedeemMessage('')
+    setRedeemError('')
+
+    try {
+      const result = await api.redeemCode(redeemCode.trim())
+      setRedeemMessage(
+        result.bonus_analyses > 0
+          ? `Code redeemed! You received ${result.bonus_analyses} bonus analyses.`
+          : 'Code redeemed successfully!'
+      )
+      setRedeemCode('')
+      // Refresh settings and quota
+      const s = await api.getSettings()
+      if (onSettingsChange) onSettingsChange(s)
+      api.getUsageQuota().then(q => setQuota(q)).catch(() => {})
+    } catch (err) {
+      setRedeemError(err.message || 'Failed to redeem code')
+    } finally {
+      setRedeemLoading(false)
+    }
+  }
+
   // Trial countdown
   const trialDaysLeft = settings?.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(settings.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)))
@@ -237,6 +290,38 @@ export default function Settings({ user, settings, onSettingsChange }) {
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 mt-3 mb-3">
               Your free trial has ended. Upgrade to Pro or add your own API key to continue.
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Redeem Invite Code */}
+      <div className="card mb-6">
+        <div className="card-header">Redeem Invite Code</div>
+        <div className="card-body space-y-3">
+          <p className="text-sm text-live-text-secondary">
+            Have an invite code? Redeem it to unlock bonus features or additional analyses.
+          </p>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              className="input flex-1"
+              value={redeemCode}
+              onChange={(e) => setRedeemCode(e.target.value)}
+              placeholder="Enter invite code"
+            />
+            <button
+              onClick={handleRedeemCode}
+              disabled={redeemLoading || !redeemCode.trim()}
+              className="btn btn-primary text-sm"
+            >
+              {redeemLoading ? 'Redeeming...' : 'Redeem'}
+            </button>
+          </div>
+          {redeemMessage && (
+            <p className="text-sm text-live-success">{redeemMessage}</p>
+          )}
+          {redeemError && (
+            <p className="text-sm text-red-600">{redeemError}</p>
           )}
         </div>
       </div>
@@ -563,6 +648,22 @@ export default function Settings({ user, settings, onSettingsChange }) {
               className="btn btn-danger"
             >
               Delete Everything Permanently
+            </button>
+          </div>
+
+          <hr className="border-live-border" />
+
+          <div>
+            <p className="text-sm font-medium text-live-text mb-1">Delete Account</p>
+            <p className="text-sm text-live-text-secondary mb-3">
+              Permanently delete your account, all data, and disable sign-in. Your account record will be retained for billing purposes only. This cannot be undone.
+            </p>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deletingAccount}
+              className="btn btn-danger"
+            >
+              {deletingAccount ? 'Deleting account...' : 'Delete My Account'}
             </button>
           </div>
         </div>

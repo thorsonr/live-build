@@ -49,6 +49,7 @@ export const api = {
   login: (data) => request('/api/auth/login', { method: 'POST', body: JSON.stringify(data) }),
   logout: () => request('/api/auth/logout', { method: 'POST' }),
   me: () => request('/api/auth/me'),
+  deleteAccount: () => request('/api/auth/account', { method: 'DELETE' }),
 
   // Data
   importData: (connections) => request('/api/data/import', { method: 'POST', body: JSON.stringify({ connections }) }),
@@ -80,6 +81,8 @@ export const api = {
   getSettings: () => request('/api/settings'),
   updateSettings: (data) => request('/api/settings', { method: 'PATCH', body: JSON.stringify(data) }),
   getUsageQuota: () => request('/api/settings/quota'),
+  redeemCode: (code) => request('/api/settings/redeem-code', { method: 'POST', body: JSON.stringify({ code }) }),
+  submitFeedback: (data) => request('/api/settings/feedback', { method: 'POST', body: JSON.stringify(data) }),
 
   // Admin
   getAdminCodes: () => request('/api/admin/invite-codes'),

@@ -7,26 +7,33 @@ export default function Signup() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [agreedToBeta, setAgreedToBeta] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    // Require invite code
-    if (!inviteCode.trim()) {
-      setError('An invite code is required to sign up. Contact us to request access.')
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
       setLoading(false)
       return
     }
 
     if (!agreedToTerms) {
       setError('Please agree to the Terms of Service and Privacy Policy to continue.')
+      setLoading(false)
+      return
+    }
+
+    if (!agreedToBeta) {
+      setError('Please acknowledge the beta disclaimer to continue.')
       setLoading(false)
       return
     }
@@ -38,7 +45,7 @@ export default function Signup() {
         password,
         options: {
           data: {
-            invite_code: inviteCode,
+            ...(inviteCode.trim() ? { invite_code: inviteCode.trim() } : {}),
             first_name: firstName.trim(),
             last_name: lastName.trim(),
           },
@@ -108,20 +115,6 @@ export default function Signup() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="label">Invite Code</label>
-              <input
-                type="text"
-                className="input"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-                placeholder="Enter your invite code"
-                required
-              />
-              <p className="mt-1 text-xs text-live-text-secondary">
-                Don't have a code? <a href="mailto:hello@robertthorson.com?subject=LiVE%20Pro%20Invite%20Request" className="text-live-info hover:underline">Request access</a>
-              </p>
-            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="label">First Name</label>
@@ -168,6 +161,30 @@ export default function Signup() {
                 At least 10 characters, with uppercase, lowercase, and a number
               </p>
             </div>
+            <div>
+              <label className="label">Confirm Password</label>
+              <input
+                type="password"
+                className="input"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                minLength={10}
+                required
+              />
+            </div>
+            <div>
+              <label className="label">Invite Code <span className="font-normal text-live-text-secondary">(optional)</span></label>
+              <input
+                type="text"
+                className="input"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+                placeholder="Enter invite code if you have one"
+              />
+              <p className="mt-1 text-xs text-live-text-secondary">
+                Have an invite code? Enter it for bonus features. You can also redeem one later in Settings.
+              </p>
+            </div>
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -182,12 +199,23 @@ export default function Signup() {
                 <Link to="/privacy" className="text-live-info hover:underline" target="_blank">Privacy Policy</Link>
               </span>
             </label>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedToBeta}
+                onChange={(e) => setAgreedToBeta(e.target.checked)}
+                className="mt-0.5 rounded border-live-border"
+              />
+              <span className="text-xs text-live-text-secondary">
+                I understand LiVE Pro is in beta. Features may change and AI outputs may be imperfect.
+              </span>
+            </label>
             <button
               type="submit"
               className="btn btn-primary w-full"
-              disabled={loading || !agreedToTerms}
+              disabled={loading || !agreedToTerms || !agreedToBeta}
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? 'Creating account...' : 'Start Free Trial'}
             </button>
           </form>
 

@@ -16,14 +16,8 @@ export default function Landing() {
             to="/signup"
             className="btn btn-primary text-base px-8 py-3"
           >
-            Start Trial
+            Start Free Trial
           </Link>
-          <a
-            href="mailto:hello@robertthorson.com?subject=LiVE%20Pro%20beta%20invite%20request"
-            className="text-sm text-live-info hover:underline"
-          >
-            Request Invite Code
-          </a>
         </div>
         <div className="mt-4">
           <Link to="/sample" className="text-sm text-live-info hover:underline">
@@ -236,7 +230,7 @@ export default function Landing() {
       <div className="mb-12">
         <h2 className="font-display text-2xl font-semibold text-center mb-2">Enhanced Analytics</h2>
         <p className="text-sm text-live-text-secondary text-center mb-8">
-          <a href="mailto:hello@robertthorson.com?subject=LiVE%20Pro%20beta%20invite%20request" className="text-live-info hover:underline">Inquire about full access</a>
+          Start with a free trial, upgrade anytime
         </p>
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           <div className="card">
@@ -325,7 +319,7 @@ export default function Landing() {
           Questions? <a href="mailto:hello@robertthorson.com" className="text-live-info hover:underline">Contact us</a>
         </p>
         <p className="text-xs text-live-text-secondary mb-4">
-          Need an invite code? <a href="mailto:hello@robertthorson.com?subject=LiVE%20Pro%20beta%20invite%20request" className="text-live-info hover:underline">Request early access</a>
+          <Link to="/signup" className="text-live-info hover:underline">Start your free trial today</Link>
         </p>
         <div className="flex justify-center gap-4 text-xs text-live-text-secondary">
           <Link to="/privacy" className="hover:text-live-info hover:underline">Privacy Policy</Link>
