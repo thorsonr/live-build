@@ -1,13 +1,10 @@
-import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useData } from '../lib/DataContext'
-import FeedbackModal from './FeedbackModal'
 
 export default function Header({ user, settings }) {
   const navigate = useNavigate()
   const { data, syncing, handleSyncToCloud } = useData()
-  const [showFeedback, setShowFeedback] = useState(false)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -15,7 +12,6 @@ export default function Header({ user, settings }) {
   }
 
   return (
-    <>
       <header className="bg-[#1a1a2e] text-white px-8 py-5 flex justify-between items-center">
         <Link to="/" className="flex flex-col items-start">
           <h1 className="text-2xl font-bold leading-none">
@@ -61,12 +57,6 @@ export default function Header({ user, settings }) {
                 </Link>
               )}
               <button
-                onClick={() => setShowFeedback(true)}
-                className="text-sm opacity-80 hover:opacity-100 transition-opacity"
-              >
-                Feedback
-              </button>
-              <button
                 onClick={handleLogout}
                 className="text-sm px-4 py-2 rounded-lg border border-white/20 hover:bg-white/10 transition-colors"
               >
@@ -91,10 +81,5 @@ export default function Header({ user, settings }) {
           )}
         </div>
       </header>
-
-      {showFeedback && (
-        <FeedbackModal onClose={() => setShowFeedback(false)} />
-      )}
-    </>
   )
 }

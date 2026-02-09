@@ -293,7 +293,7 @@ router.get('/feedback', requireAdmin, async (req, res, next) => {
   try {
     const { data: feedback, error } = await supabaseAdmin
       .from('feedback')
-      .select('id, user_id, email, category, message, page_url, created_at')
+      .select('id, user_id, email, category, message, page_url, status, created_at')
       .order('created_at', { ascending: false })
       .limit(100)
 
@@ -302,6 +302,35 @@ router.get('/feedback', requireAdmin, async (req, res, next) => {
     }
 
     res.json({ feedback: feedback || [] })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Update feedback status (admin only)
+const ALLOWED_FEEDBACK_STATUSES = ['new', 'reviewed', 'resolved', 'archived']
+
+router.patch('/feedback/:id', requireAdmin, async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { status } = req.body
+
+    if (!status || !ALLOWED_FEEDBACK_STATUSES.includes(status)) {
+      return res.status(400).json({ error: `Invalid status. Allowed: ${ALLOWED_FEEDBACK_STATUSES.join(', ')}` })
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('feedback')
+      .update({ status })
+      .eq('id', id)
+      .select('id, status')
+      .single()
+
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({ feedback: data })
   } catch (err) {
     next(err)
   }

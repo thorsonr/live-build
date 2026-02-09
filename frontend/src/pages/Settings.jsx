@@ -50,6 +50,13 @@ export default function Settings({ user, settings, onSettingsChange }) {
   const [redeemMessage, setRedeemMessage] = useState('')
   const [redeemError, setRedeemError] = useState('')
 
+  // Feedback state
+  const [feedbackCategory, setFeedbackCategory] = useState('general')
+  const [feedbackMessage, setFeedbackMessage] = useState('')
+  const [feedbackSending, setFeedbackSending] = useState(false)
+  const [feedbackSent, setFeedbackSent] = useState(false)
+  const [feedbackError, setFeedbackError] = useState('')
+
   const tier = settings?.tier || 'trial'
   const showByok = settings?.show_byok !== false
   const trialExpired = settings?.trial_expired === true
@@ -221,6 +228,27 @@ export default function Settings({ user, settings, onSettingsChange }) {
     }
   }
 
+  const handleSendFeedback = async () => {
+    if (!feedbackMessage.trim()) return
+    setFeedbackSending(true)
+    setFeedbackError('')
+
+    try {
+      await api.submitFeedback({
+        category: feedbackCategory,
+        message: feedbackMessage.trim(),
+        page_url: window.location.pathname,
+      })
+      setFeedbackSent(true)
+      setFeedbackMessage('')
+      setTimeout(() => setFeedbackSent(false), 5000)
+    } catch (err) {
+      setFeedbackError(err.message || 'Failed to submit feedback')
+    } finally {
+      setFeedbackSending(false)
+    }
+  }
+
   // Trial countdown
   const trialDaysLeft = settings?.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(settings.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)))
@@ -290,6 +318,69 @@ export default function Settings({ user, settings, onSettingsChange }) {
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 mt-3 mb-3">
               Your free trial has ended. Upgrade to Pro or add your own API key to continue.
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Send Feedback */}
+      <div className="card mb-6">
+        <div className="card-header flex items-center gap-2">
+          <span>Send Feedback</span>
+        </div>
+        <div className="card-body space-y-3">
+          <p className="text-sm text-live-text-secondary">
+            Report a bug, request a feature, or share your thoughts.
+          </p>
+
+          {feedbackSent ? (
+            <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+              Thanks for your feedback! Your message has been received.
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { value: 'general', label: 'General' },
+                  { value: 'bug', label: 'Bug Report' },
+                  { value: 'feature', label: 'Feature Request' },
+                  { value: 'ai', label: 'AI Feedback' },
+                ].map(c => (
+                  <button
+                    key={c.value}
+                    onClick={() => setFeedbackCategory(c.value)}
+                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      feedbackCategory === c.value
+                        ? 'border-live-accent bg-live-accent-soft text-live-accent font-medium'
+                        : 'border-live-border text-live-text-secondary hover:bg-live-bg-warm'
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                className="input w-full"
+                rows={3}
+                value={feedbackMessage}
+                onChange={(e) => setFeedbackMessage(e.target.value)}
+                maxLength={2000}
+                placeholder="What's on your mind?"
+                style={{ resize: 'vertical', minHeight: '80px' }}
+              />
+
+              {feedbackError && (
+                <p className="text-sm text-red-600">{feedbackError}</p>
+              )}
+
+              <button
+                onClick={handleSendFeedback}
+                disabled={feedbackSending || !feedbackMessage.trim()}
+                className="btn btn-primary text-sm flex items-center gap-2"
+              >
+                {feedbackSending ? 'Sending...' : 'Send Feedback'}
+              </button>
+            </>
           )}
         </div>
       </div>

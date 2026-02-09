@@ -30,6 +30,8 @@ export default function Admin({ user }) {
 
   // Feedback tab state
   const [feedback, setFeedback] = useState([])
+  const [feedbackFilter, setFeedbackFilter] = useState('all')
+  const [updatingFeedback, setUpdatingFeedback] = useState(null)
 
   useEffect(() => {
     loadData()
@@ -388,50 +390,163 @@ export default function Admin({ user }) {
           )}
 
           {/* Feedback Tab */}
-          {activeTab === 'feedback' && (
-            <div className="card">
-              <div className="card-header">User Feedback ({feedback.length})</div>
-              <div className="card-body overflow-x-auto">
-                {feedback.length === 0 ? (
-                  <p className="py-8 text-center text-live-text-secondary">No feedback submitted yet.</p>
+          {activeTab === 'feedback' && (() => {
+            const newCount = feedback.filter(f => (f.status || 'new') === 'new').length
+            const reviewedCount = feedback.filter(f => f.status === 'reviewed').length
+            const resolvedCount = feedback.filter(f => f.status === 'resolved').length
+            const archivedCount = feedback.filter(f => f.status === 'archived').length
+            const filtered = feedbackFilter === 'all'
+              ? feedback.filter(f => f.status !== 'archived')
+              : feedback.filter(f => (f.status || 'new') === feedbackFilter)
+
+            const handleStatusChange = async (id, status) => {
+              setUpdatingFeedback(id)
+              try {
+                await api.updateAdminFeedback(id, { status })
+                setFeedback(prev => prev.map(f => f.id === id ? { ...f, status } : f))
+              } catch (err) {
+                setError(`Failed to update feedback: ${err.message}`)
+              } finally {
+                setUpdatingFeedback(null)
+              }
+            }
+
+            const statusIcon = (s) => {
+              if (s === 'reviewed') return '🟡'
+              if (s === 'resolved') return '🟢'
+              if (s === 'archived') return '📁'
+              return '⏳'
+            }
+
+            const categoryBadgeClass = (cat) => {
+              if (cat === 'bug') return 'badge-danger'
+              if (cat === 'feature') return 'badge-info'
+              if (cat === 'ai') return 'badge-accent'
+              return 'badge-success'
+            }
+
+            return (
+              <div>
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <h2 className="font-display text-lg font-semibold text-live-text">User Feedback</h2>
+                    {newCount > 0 && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-live-accent text-[#1a1a2e]">
+                        {newCount} new
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={loadData}
+                    className="text-sm text-live-text-secondary hover:text-live-text flex items-center gap-1"
+                  >
+                    Refresh
+                  </button>
+                </div>
+
+                {/* Filters */}
+                <div className="flex gap-2 mb-4 flex-wrap">
+                  {[
+                    { value: 'all', label: 'All', count: feedback.filter(f => f.status !== 'archived').length },
+                    { value: 'new', label: 'New', count: newCount },
+                    { value: 'reviewed', label: 'Reviewed', count: reviewedCount },
+                    { value: 'resolved', label: 'Resolved', count: resolvedCount },
+                    { value: 'archived', label: 'Archived', count: archivedCount },
+                  ].map(f => (
+                    <button
+                      key={f.value}
+                      onClick={() => setFeedbackFilter(f.value)}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                        feedbackFilter === f.value
+                          ? 'border-live-accent bg-live-accent-soft text-live-accent font-medium'
+                          : 'border-live-border text-live-text-secondary hover:bg-live-bg-warm'
+                      }`}
+                    >
+                      {f.label} ({f.count})
+                    </button>
+                  ))}
+                </div>
+
+                {/* Feedback items */}
+                {filtered.length === 0 ? (
+                  <div className="card">
+                    <div className="card-body py-8 text-center text-live-text-secondary">
+                      {feedbackFilter === 'all' ? 'No feedback submitted yet.' : `No ${feedbackFilter} feedback.`}
+                    </div>
+                  </div>
                 ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-xs uppercase text-live-text-secondary border-b border-live-border">
-                        <th className="pb-3 pr-4">Date</th>
-                        <th className="pb-3 pr-4">Email</th>
-                        <th className="pb-3 pr-4">Category</th>
-                        <th className="pb-3 pr-4">Message</th>
-                        <th className="pb-3">Page</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {feedback.map(f => (
-                        <tr key={f.id} className="border-b border-live-border align-top">
-                          <td className="py-3 pr-4 whitespace-nowrap">{new Date(f.created_at).toLocaleDateString()}</td>
-                          <td className="py-3 pr-4 text-xs">{f.email || '—'}</td>
-                          <td className="py-3 pr-4">
-                            <span className={`badge ${
-                              f.category === 'bug' ? 'badge-danger' :
-                              f.category === 'feature' ? 'badge-info' :
-                              f.category === 'ai' ? 'badge-accent' :
-                              'badge-success'
-                            }`}>
-                              {f.category || 'general'}
-                            </span>
-                          </td>
-                          <td className="py-3 pr-4 max-w-md">
-                            <p className="whitespace-pre-wrap break-words">{f.message}</p>
-                          </td>
-                          <td className="py-3 text-xs text-live-text-secondary">{f.page_url ? new URL(f.page_url).pathname : '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <div className="space-y-3">
+                    {filtered.map(f => {
+                      const currentStatus = f.status || 'new'
+                      const isUpdating = updatingFeedback === f.id
+                      return (
+                        <div key={f.id} className="card">
+                          <div className="card-body">
+                            {/* Top row: category + email + date */}
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">{statusIcon(currentStatus)}</span>
+                                <span className={`badge ${categoryBadgeClass(f.category)}`}>
+                                  {f.category || 'general'}
+                                </span>
+                                <span className="text-sm text-live-text-secondary">
+                                  from <span className="font-medium text-live-text">{f.email || 'unknown'}</span>
+                                </span>
+                              </div>
+                              <span className="text-xs text-live-text-secondary whitespace-nowrap">
+                                {new Date(f.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at {new Date(f.created_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                              </span>
+                            </div>
+
+                            {/* Message */}
+                            <p className="text-sm text-live-text mb-3 whitespace-pre-wrap">{f.message}</p>
+
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => handleStatusChange(f.id, 'reviewed')}
+                                disabled={isUpdating || currentStatus === 'reviewed'}
+                                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                                  currentStatus === 'reviewed'
+                                    ? 'border-yellow-400 bg-yellow-50 text-yellow-700 font-medium'
+                                    : 'border-live-border text-live-text-secondary hover:bg-live-bg-warm'
+                                }`}
+                              >
+                                🟡 Reviewed
+                              </button>
+                              <button
+                                onClick={() => handleStatusChange(f.id, 'resolved')}
+                                disabled={isUpdating || currentStatus === 'resolved'}
+                                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                                  currentStatus === 'resolved'
+                                    ? 'border-green-400 bg-green-50 text-green-700 font-medium'
+                                    : 'border-live-border text-live-text-secondary hover:bg-live-bg-warm'
+                                }`}
+                              >
+                                🟢 Resolved
+                              </button>
+                              <button
+                                onClick={() => handleStatusChange(f.id, 'archived')}
+                                disabled={isUpdating || currentStatus === 'archived'}
+                                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                                  currentStatus === 'archived'
+                                    ? 'border-live-border bg-live-bg-warm text-live-text-secondary font-medium'
+                                    : 'border-live-border text-live-text-secondary hover:bg-live-bg-warm'
+                                }`}
+                              >
+                                📁 Archived
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 )}
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Analytics Tab */}
           {activeTab === 'analytics' && analytics && (

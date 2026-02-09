@@ -94,4 +94,5 @@ export const api = {
   getAdminAIConfig: () => request('/api/admin/ai-config'),
   updateAdminAIConfig: (data) => request('/api/admin/ai-config', { method: 'PUT', body: JSON.stringify(data) }),
   getAdminFeedback: () => request('/api/admin/feedback'),
+  updateAdminFeedback: (id, data) => request(`/api/admin/feedback/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 }
