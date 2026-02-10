@@ -1,10 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useData } from '../lib/DataContext'
+import { useTheme } from '../lib/ThemeContext'
 
 export default function Header({ user, settings }) {
   const navigate = useNavigate()
   const { data, syncing, handleSyncToCloud } = useData()
+  const { theme, setTheme } = useTheme()
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -25,6 +28,14 @@ export default function Header({ user, settings }) {
         <div className="flex items-center gap-4">
           {user ? (
             <>
+              {/* Theme toggle */}
+              <button
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                className="text-sm p-2 rounded-lg hover:bg-white/10 transition-colors"
+                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {isDark ? '☀️' : '🌙'}
+              </button>
               {/* Save button - only show when data is loaded */}
               {data && (
                 <button
