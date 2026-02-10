@@ -82,6 +82,14 @@ router.post('/signup', async (req, res, next) => {
 
     // Create users table row for every signup
     if (authData.user?.id) {
+      // If a stale row exists with this email (e.g. from a deleted + re-registered account),
+      // remove it first so the new row can be inserted with the new auth user ID
+      await supabaseAdmin
+        .from('users')
+        .delete()
+        .eq('email', email)
+        .neq('id', authData.user.id)
+
       const { error: upsertError } = await supabaseAdmin
         .from('users')
         .upsert({

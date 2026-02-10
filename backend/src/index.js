@@ -15,6 +15,9 @@ import settingsRoutes from './routes/settings.js'
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Trust proxy when behind Railway/reverse proxy (needed for rate limiting + correct IP detection)
+app.set('trust proxy', 1)
+
 // Security headers — relax CSP for serving SPA frontend
 app.use(helmet({
   contentSecurityPolicy: false,
