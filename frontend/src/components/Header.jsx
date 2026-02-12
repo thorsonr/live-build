@@ -94,7 +94,7 @@ export default function Header({ user, settings }) {
                 to="/signup"
                 className="text-sm px-4 py-2 rounded-lg bg-live-accent text-[#1a1a2e] font-medium hover:opacity-90 transition-opacity"
               >
-                Start Trial
+                Try It Out
               </Link>
             </>
           )}

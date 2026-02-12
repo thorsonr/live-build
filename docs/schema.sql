@@ -232,7 +232,7 @@ BEGIN
 
   RETURN v_quota;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Function to increment usage
 CREATE OR REPLACE FUNCTION increment_usage(
@@ -274,7 +274,7 @@ BEGIN
 
   RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- =============================================
 -- TRIGGERS
@@ -287,7 +287,7 @@ BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 CREATE TRIGGER users_updated_at
   BEFORE UPDATE ON users
@@ -302,7 +302,9 @@ CREATE TRIGGER connections_updated_at
 -- =============================================
 
 -- View for admin analytics (no PII)
-CREATE OR REPLACE VIEW admin_analytics AS
+CREATE OR REPLACE VIEW admin_analytics
+WITH (security_invoker = true)
+AS
 SELECT
   DATE(created_at) as date,
   COUNT(*) as new_users,
@@ -312,7 +314,9 @@ GROUP BY DATE(created_at)
 ORDER BY date DESC;
 
 -- View for usage analytics
-CREATE OR REPLACE VIEW admin_usage AS
+CREATE OR REPLACE VIEW admin_usage
+WITH (security_invoker = true)
+AS
 SELECT
   DATE(created_at) as date,
   feature,

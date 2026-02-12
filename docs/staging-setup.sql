@@ -333,7 +333,7 @@ BEGIN
 
   RETURN v_quota;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Increment usage
 CREATE OR REPLACE FUNCTION increment_usage(
@@ -369,13 +369,14 @@ BEGIN
 
   RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Atomic invite code redemption
 CREATE OR REPLACE FUNCTION redeem_invite_code(p_code TEXT, p_user_id UUID)
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_code invite_codes%ROWTYPE;
@@ -423,7 +424,7 @@ BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 CREATE TRIGGER users_updated_at
   BEFORE UPDATE ON users
@@ -438,7 +439,9 @@ CREATE TRIGGER connections_updated_at
 -- 15. ADMIN VIEWS
 -- =============================================
 
-CREATE OR REPLACE VIEW admin_analytics AS
+CREATE OR REPLACE VIEW admin_analytics
+WITH (security_invoker = true)
+AS
 SELECT
   DATE(created_at) as date,
   COUNT(*) as new_users,
@@ -447,7 +450,9 @@ FROM users
 GROUP BY DATE(created_at)
 ORDER BY date DESC;
 
-CREATE OR REPLACE VIEW admin_usage AS
+CREATE OR REPLACE VIEW admin_usage
+WITH (security_invoker = true)
+AS
 SELECT
   DATE(created_at) as date,
   feature,

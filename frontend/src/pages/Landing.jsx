@@ -16,7 +16,7 @@ export default function Landing() {
             to="/signup"
             className="btn btn-primary text-base px-8 py-3"
           >
-            Start Free Trial
+            Try It Out!
           </Link>
         </div>
         <div className="mt-4">
@@ -319,7 +319,7 @@ export default function Landing() {
           Questions? <a href="mailto:hello@robertthorson.com" className="text-live-info hover:underline">Contact us</a>
         </p>
         <p className="text-xs text-live-text-secondary mb-4">
-          <Link to="/signup" className="text-live-info hover:underline">Start your free trial today</Link>
+          <Link to="/signup" className="text-live-info hover:underline">Try it out today</Link>
         </p>
         <div className="flex justify-center gap-4 text-xs text-live-text-secondary">
           <Link to="/privacy" className="hover:text-live-info hover:underline">Privacy Policy</Link>

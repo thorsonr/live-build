@@ -34,6 +34,7 @@ CREATE OR REPLACE FUNCTION redeem_invite_code(p_code TEXT, p_user_id UUID)
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_code invite_codes%ROWTYPE;
