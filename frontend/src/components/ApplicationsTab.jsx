@@ -624,6 +624,35 @@ export default function ApplicationsTab({ rawData = {}, sampleMode = false }) {
       </div>
 
       {viewMode === 'summary' ? (
+        <div className="overflow-x-auto pb-2">
+          <div className="grid grid-flow-col auto-cols-[260px] gap-3">
+            {STATUS_OPTIONS.map((status) => (
+              <div key={status.id} className="card">
+                <div className="card-header flex items-center justify-between">
+                  <span>{status.label}</span>
+                  <span className="text-xs text-live-text-secondary">{grouped[status.id]?.length || 0}</span>
+                </div>
+                <div className="card-body space-y-2 max-h-[520px] overflow-y-auto">
+                  {(grouped[status.id] || []).length === 0 ? (
+                    <p className="text-xs text-live-text-secondary">No applications</p>
+                  ) : (
+                    grouped[status.id].map((entry) => {
+                      const primaryDate = entry.application_date || entry.saved_date || entry.created_at
+                      return (
+                        <button key={entry.id} onClick={() => setSelectedEntry(entry)} className="w-full text-left p-3 rounded-lg border border-live-border hover:border-live-accent transition-colors">
+                          <div className="text-sm font-medium text-live-text">{entry.company_name}</div>
+                          <div className="text-xs text-live-text-secondary">{entry.job_title}</div>
+                          <div className="text-xs text-live-text-secondary mt-1">{formatDate(primaryDate)}</div>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
         <div className="card">
           <div className="card-header">Applications ({filteredEntries.length})</div>
           <div className="card-body">
@@ -687,35 +716,6 @@ export default function ApplicationsTab({ rawData = {}, sampleMode = false }) {
                 )
               })}
             </div>
-          </div>
-        </div>
-      ) : (
-        <div className="overflow-x-auto pb-2">
-          <div className="grid grid-flow-col auto-cols-[260px] gap-3">
-            {STATUS_OPTIONS.map((status) => (
-              <div key={status.id} className="card">
-                <div className="card-header flex items-center justify-between">
-                  <span>{status.label}</span>
-                  <span className="text-xs text-live-text-secondary">{grouped[status.id]?.length || 0}</span>
-                </div>
-                <div className="card-body space-y-2 max-h-[520px] overflow-y-auto">
-                  {(grouped[status.id] || []).length === 0 ? (
-                    <p className="text-xs text-live-text-secondary">No applications</p>
-                  ) : (
-                    grouped[status.id].map((entry) => {
-                      const primaryDate = entry.application_date || entry.saved_date || entry.created_at
-                      return (
-                        <button key={entry.id} onClick={() => setSelectedEntry(entry)} className="w-full text-left p-3 rounded-lg border border-live-border hover:border-live-accent transition-colors">
-                          <div className="text-sm font-medium text-live-text">{entry.company_name}</div>
-                          <div className="text-xs text-live-text-secondary">{entry.job_title}</div>
-                          <div className="text-xs text-live-text-secondary mt-1">{formatDate(primaryDate)}</div>
-                        </button>
-                      )
-                    })
-                  )}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       )}

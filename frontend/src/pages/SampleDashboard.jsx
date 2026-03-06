@@ -40,7 +40,7 @@ const sections = [
       { id: 'priorities', label: 'Priorities' },
       { id: 'messages', label: 'Messages' },
       { id: 'applications', label: 'Applications' },
-      { id: 'tracker', label: 'Tracker' },
+      { id: 'tracker', label: 'Outreach Tracking' },
     ]
   },
 ]

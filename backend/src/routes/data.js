@@ -609,6 +609,9 @@ router.patch('/job-applications/:id', requireAuth, async (req, res, next) => {
     if (req.body?.question_count !== undefined) updates.question_count = Number.isFinite(req.body.question_count) ? req.body.question_count : null
     if (req.body?.screening_summary !== undefined) updates.screening_summary = sanitizeText(req.body.screening_summary, 1000)
     if (req.body?.notes !== undefined) updates.notes = sanitizeText(req.body.notes, 3000)
+    if (req.body?.metadata !== undefined && req.body.metadata && typeof req.body.metadata === 'object') {
+      updates.metadata = req.body.metadata
+    }
 
     const { data, error } = await supabaseAdmin
       .from('job_applications')
