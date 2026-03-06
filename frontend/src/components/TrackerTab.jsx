@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { DndContext, useDraggable, useDroppable, pointerWithin, useSensor, useSensors, PointerSensor } from '@dnd-kit/core'
 import { api } from '../lib/api'
+import SampleModePromptModal from './SampleModePromptModal'
 
 const STATUSES = [
   { id: 'identified', label: 'Identified', color: 'bg-gray-100 text-gray-700' },
@@ -105,7 +106,7 @@ function DraggableCard({ id, children }) {
   )
 }
 
-function TrackerDetailModal({ entry, onClose, onUpdate }) {
+function TrackerDetailModal({ entry, sampleMode = false, onSampleAction, onClose, onUpdate }) {
   const [status, setStatus] = useState(entry.status)
   const [notes, setNotes] = useState(entry.notes || '')
   const [email, setEmail] = useState(entry.contact_email || '')
@@ -117,6 +118,7 @@ function TrackerDetailModal({ entry, onClose, onUpdate }) {
 
   // Auto-save notes with debounce
   useEffect(() => {
+    if (sampleMode) return undefined
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       if (notes !== (entry.notes || '')) {
@@ -129,9 +131,13 @@ function TrackerDetailModal({ entry, onClose, onUpdate }) {
       }
     }, 1000)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [notes])
+  }, [notes, sampleMode, entry.id, entry.notes, onUpdate])
 
   const handleStatusChange = async (newStatus) => {
+    if (sampleMode) {
+      onSampleAction?.()
+      return
+    }
     setStatus(newStatus)
     try {
       const data = await api.updateTracker(entry.id, { status: newStatus })
@@ -143,6 +149,12 @@ function TrackerDetailModal({ entry, onClose, onUpdate }) {
   }
 
   const handleSaveContactInfo = async () => {
+    if (sampleMode) {
+      onSampleAction?.()
+      setEmail(entry.contact_email || '')
+      setPhone(entry.contact_phone || '')
+      return
+    }
     try {
       const data = await api.updateTracker(entry.id, {
         contact_email: email || null,
@@ -156,6 +168,10 @@ function TrackerDetailModal({ entry, onClose, onUpdate }) {
 
   const handleLogEngagement = async () => {
     if (!logDate) return
+    if (sampleMode) {
+      onSampleAction?.()
+      return
+    }
     const newLog = [...engagementLog, { date: logDate, type: logType }]
     setEngagementLog(newLog)
     try {
@@ -322,6 +338,7 @@ export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = 
   const [viewMode, setViewMode] = useState('list') // 'list' | 'board'
   const [selectedEntry, setSelectedEntry] = useState(null)
   const [activeDropId, setActiveDropId] = useState(null)
+  const [showSamplePrompt, setShowSamplePrompt] = useState(false)
   const existingDropdownRef = useRef(null)
 
   // Close existing contact dropdown on outside click
@@ -387,6 +404,10 @@ export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = 
 
   const handleAdd = async () => {
     if (!form.contact_name.trim()) return
+    if (sampleMode) {
+      setShowSamplePrompt(true)
+      return
+    }
     try {
       const data = await api.addToTracker(form)
       setEntries(prev => [data.entry, ...prev])
@@ -398,6 +419,10 @@ export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = 
   }
 
   const handleDelete = async (id) => {
+    if (sampleMode) {
+      setShowSamplePrompt(true)
+      return
+    }
     try {
       await api.removeFromTracker(id)
       setEntries(prev => prev.filter(e => e.id !== id))
@@ -408,6 +433,10 @@ export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = 
   }
 
   const handleStatusChange = async (id, newStatus) => {
+    if (sampleMode) {
+      setShowSamplePrompt(true)
+      return
+    }
     try {
       const data = await api.updateTracker(id, { status: newStatus })
       setEntries(prev => prev.map(e => e.id === id ? data.entry : e))
@@ -423,6 +452,10 @@ export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = 
 
   const handleDragEnd = async (event) => {
     setActiveDropId(null)
+    if (sampleMode) {
+      if (event?.over) setShowSamplePrompt(true)
+      return
+    }
     const { active, over } = event
     if (!over) return
 
@@ -878,10 +911,14 @@ export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = 
       {selectedEntry && (
         <TrackerDetailModal
           entry={selectedEntry}
+          sampleMode={sampleMode}
+          onSampleAction={() => setShowSamplePrompt(true)}
           onClose={() => setSelectedEntry(null)}
           onUpdate={handleEntryUpdate}
         />
       )}
+
+      <SampleModePromptModal open={showSamplePrompt} onClose={() => setShowSamplePrompt(false)} />
     </div>
   )
 }
