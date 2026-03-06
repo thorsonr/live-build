@@ -228,6 +228,7 @@ router.delete('/all', requireAuth, async (req, res, next) => {
     await supabaseAdmin.from('network_analysis').delete().eq('user_id', userId)
     await supabaseAdmin.from('usage_quotas').delete().eq('user_id', userId)
     await supabaseAdmin.from('custom_categories').delete().eq('user_id', userId)
+    await supabaseAdmin.from('job_applications').delete().eq('user_id', userId)
     await supabaseAdmin.from('engagement_tracker').delete().eq('user_id', userId)
     await supabaseAdmin.from('analysis_archives').delete().eq('user_id', userId)
 
@@ -307,6 +308,334 @@ router.get('/analytics-cache', requireAuth, async (req, res, next) => {
     }
 
     res.json({ analytics })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// =============================================
+// JOB APPLICATIONS WORKSPACE
+// =============================================
+
+const APPLICATION_STATUSES = ['saved', 'applied', 'screen', 'interview', 'final', 'offer', 'rejected', 'withdrawn', 'closed']
+const APPLICATION_SOURCES = ['linkedin_export', 'external_manual', 'external_url']
+
+function parseDateLoose(value) {
+  if (!value || typeof value !== 'string') return null
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  const d = new Date(trimmed)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
+function toSlug(text) {
+  return (text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function normalizeCompanyName(name) {
+  return (name || '').trim()
+}
+
+function sanitizeText(value, max = 5000) {
+  if (value === null || value === undefined) return null
+  const text = String(value).trim()
+  if (!text) return null
+  return text.slice(0, max)
+}
+
+function createExternalKey({ source, jobUrl, companyName, jobTitle, applicationDate, savedDate }) {
+  const canonicalUrl = sanitizeText(jobUrl, 1000)?.toLowerCase()
+  if (canonicalUrl) return `${source}|url|${canonicalUrl}`
+  return `${source}|${toSlug(companyName)}|${toSlug(jobTitle)}|${applicationDate || savedDate || 'unknown'}`
+}
+
+function parseScreeningSummary(questionAndAnswers) {
+  const raw = sanitizeText(questionAndAnswers, 10000)
+  if (!raw) return { questionCount: null, screeningSummary: null }
+  const segments = raw.split('|').map(s => s.trim()).filter(Boolean)
+  const preview = segments.slice(0, 3).join(' | ')
+  return {
+    questionCount: segments.length || null,
+    screeningSummary: preview || null,
+  }
+}
+
+function parseJobUrl(inputUrl) {
+  try {
+    const parsed = new URL(inputUrl)
+    const hostname = parsed.hostname.replace(/^www\./i, '').toLowerCase()
+    const pathname = parsed.pathname || ''
+    const segments = pathname.split('/').filter(Boolean)
+    const siteName = hostname.split('.').slice(0, -1).join('.') || hostname.split('.')[0]
+    const inferredCompany = siteName
+      ? siteName.split(/[-_.]/).map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+      : null
+
+    let inferredTitle = null
+    const lastSegment = segments[segments.length - 1] || ''
+    if (lastSegment && !/^\d+$/.test(lastSegment)) {
+      inferredTitle = decodeURIComponent(lastSegment)
+        .replace(/[-_]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    }
+
+    const isLinkedIn = hostname.includes('linkedin.com')
+    return {
+      jobUrl: parsed.toString(),
+      companyWebsite: isLinkedIn ? null : `${parsed.protocol}//${parsed.hostname}`,
+      inferredCompany: isLinkedIn ? null : inferredCompany,
+      inferredTitle: inferredTitle || null,
+      confidence: isLinkedIn ? 'low' : 'medium',
+      note: isLinkedIn
+        ? 'LinkedIn job links usually do not include a reliable company website. Add company website manually if needed.'
+        : 'Parsed from URL structure. Please confirm before saving.',
+    }
+  } catch {
+    return null
+  }
+}
+
+function mapLinkedInApplicationRow(row) {
+  const source = 'linkedin_export'
+  const companyName = normalizeCompanyName(row['Company Name'] || row.Company || '')
+  const jobTitle = sanitizeText(row['Job Title'] || row.Title || '', 500) || 'Unknown role'
+  const jobUrl = sanitizeText(row['Job Url'] || row['Job URL'] || row.url || '', 1000)
+  const applicationDate = parseDateLoose(row['Application Date'] || row['Applied On'] || row['Date Applied'])
+  const resumeName = sanitizeText(row['Resume Name'] || row['Resume'], 500)
+  const { questionCount, screeningSummary } = parseScreeningSummary(row['Question And Answers'])
+
+  return {
+    source,
+    company_name: companyName || 'Unknown company',
+    job_title: jobTitle,
+    job_url: jobUrl,
+    status: 'applied',
+    application_date: applicationDate,
+    resume_name: resumeName,
+    question_count: questionCount,
+    screening_summary: screeningSummary,
+    external_key: createExternalKey({
+      source,
+      jobUrl,
+      companyName,
+      jobTitle,
+      applicationDate,
+      savedDate: null,
+    }),
+    metadata: { imported_from: 'linkedin_job_applications' },
+  }
+}
+
+function mapLinkedInSavedJobRow(row) {
+  const source = 'linkedin_export'
+  const companyName = normalizeCompanyName(row['Company Name'] || row.Company || '')
+  const jobTitle = sanitizeText(row['Job Title'] || row.Title || '', 500) || 'Unknown role'
+  const jobUrl = sanitizeText(row['Job Url'] || row['Job URL'] || row.url || '', 1000)
+  const savedDate = parseDateLoose(row['Saved Date'] || row['Date Saved'])
+
+  return {
+    source,
+    company_name: companyName || 'Unknown company',
+    job_title: jobTitle,
+    job_url: jobUrl,
+    status: 'saved',
+    saved_date: savedDate,
+    external_key: createExternalKey({
+      source,
+      jobUrl,
+      companyName,
+      jobTitle,
+      applicationDate: null,
+      savedDate,
+    }),
+    metadata: { imported_from: 'linkedin_saved_jobs' },
+  }
+}
+
+router.get('/job-applications', requireAuth, async (req, res, next) => {
+  try {
+    const { status, source, q, follow_up_due, date_from, date_to, limit } = req.query
+    let query = supabaseAdmin
+      .from('job_applications')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('application_date', { ascending: false, nullsFirst: false })
+      .order('saved_date', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+
+    if (status && APPLICATION_STATUSES.includes(status)) query = query.eq('status', status)
+    if (source && APPLICATION_SOURCES.includes(source)) query = query.eq('source', source)
+    if (q) {
+      const sanitized = String(q).replace(/[,.()"\\%_]/g, '')
+      query = query.or(`company_name.ilike.%${sanitized}%,job_title.ilike.%${sanitized}%,notes.ilike.%${sanitized}%`)
+    }
+    if (follow_up_due === 'true') query = query.lte('follow_up_date', new Date().toISOString().slice(0, 10))
+    if (date_from) query = query.gte('application_date', date_from)
+    if (date_to) query = query.lte('application_date', date_to)
+    if (limit) query = query.limit(Math.min(parseInt(limit, 10) || 200, 1000))
+
+    const { data, error } = await query
+    if (error) return res.status(400).json({ error: error.message })
+    res.json({ entries: data || [] })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/job-applications/import', requireAuth, async (req, res, next) => {
+  try {
+    const jobApplications = Array.isArray(req.body?.jobApplications) ? req.body.jobApplications : []
+    const savedJobs = Array.isArray(req.body?.savedJobs) ? req.body.savedJobs : []
+    const userId = req.user.id
+
+    const rows = [
+      ...jobApplications.map(mapLinkedInApplicationRow),
+      ...savedJobs.map(mapLinkedInSavedJobRow),
+    ].map(row => ({ ...row, user_id: userId }))
+
+    if (rows.length === 0) return res.json({ imported: 0, entries: [] })
+
+    const { data, error } = await supabaseAdmin
+      .from('job_applications')
+      .upsert(rows, { onConflict: 'user_id,external_key' })
+      .select('id')
+
+    if (error) return res.status(400).json({ error: error.message })
+    res.json({ imported: data?.length || rows.length, entries: data || [] })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/job-applications/parse-url', requireAuth, async (req, res, next) => {
+  try {
+    const url = sanitizeText(req.body?.url, 1500)
+    if (!url) return res.status(400).json({ error: 'url is required' })
+    const parsed = parseJobUrl(url)
+    if (!parsed) return res.status(400).json({ error: 'Unable to parse URL' })
+    res.json({ parsed })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/job-applications', requireAuth, async (req, res, next) => {
+  try {
+    const source = APPLICATION_SOURCES.includes(req.body?.source) ? req.body.source : 'external_manual'
+    const companyName = normalizeCompanyName(req.body?.company_name || req.body?.companyName || '')
+    const jobTitle = sanitizeText(req.body?.job_title || req.body?.jobTitle || '', 500)
+    const jobUrl = sanitizeText(req.body?.job_url || req.body?.jobUrl, 1000)
+    const status = APPLICATION_STATUSES.includes(req.body?.status) ? req.body.status : 'applied'
+    const appliedVia = sanitizeText(req.body?.applied_via || req.body?.appliedVia, 200)
+    const applicationDate = parseDateLoose(req.body?.application_date || req.body?.applicationDate)
+    const savedDate = parseDateLoose(req.body?.saved_date || req.body?.savedDate)
+
+    if (!companyName || !jobTitle) {
+      return res.status(400).json({ error: 'company_name and job_title are required' })
+    }
+
+    const payload = {
+      user_id: req.user.id,
+      source,
+      company_name: companyName,
+      company_website: sanitizeText(req.body?.company_website || req.body?.companyWebsite, 500),
+      job_title: jobTitle,
+      job_url: jobUrl,
+      location: sanitizeText(req.body?.location, 200),
+      status,
+      applied_via: appliedVia,
+      application_date: applicationDate,
+      saved_date: savedDate,
+      follow_up_date: sanitizeText(req.body?.follow_up_date || req.body?.followUpDate, 20),
+      hiring_manager: sanitizeText(req.body?.hiring_manager || req.body?.hiringManager, 200),
+      recruiter_name: sanitizeText(req.body?.recruiter_name || req.body?.recruiterName, 200),
+      recruiter_contact: sanitizeText(req.body?.recruiter_contact || req.body?.recruiterContact, 200),
+      resume_name: sanitizeText(req.body?.resume_name || req.body?.resumeName, 500),
+      question_count: Number.isFinite(req.body?.question_count) ? req.body.question_count : null,
+      screening_summary: sanitizeText(req.body?.screening_summary || req.body?.screeningSummary, 1000),
+      notes: sanitizeText(req.body?.notes, 3000),
+      metadata: req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {},
+      external_key: createExternalKey({
+        source,
+        jobUrl,
+        companyName,
+        jobTitle,
+        applicationDate,
+        savedDate,
+      }),
+      last_action_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('job_applications')
+      .upsert(payload, { onConflict: 'user_id,external_key' })
+      .select('*')
+      .single()
+
+    if (error) return res.status(400).json({ error: error.message })
+    res.json({ entry: data })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.patch('/job-applications/:id', requireAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const updates = {
+      updated_at: new Date().toISOString(),
+      last_action_at: new Date().toISOString(),
+    }
+
+    if (req.body?.status && APPLICATION_STATUSES.includes(req.body.status)) updates.status = req.body.status
+    if (req.body?.company_name !== undefined) updates.company_name = sanitizeText(req.body.company_name, 500)
+    if (req.body?.company_website !== undefined) updates.company_website = sanitizeText(req.body.company_website, 500)
+    if (req.body?.job_title !== undefined) updates.job_title = sanitizeText(req.body.job_title, 500)
+    if (req.body?.job_url !== undefined) updates.job_url = sanitizeText(req.body.job_url, 1000)
+    if (req.body?.location !== undefined) updates.location = sanitizeText(req.body.location, 200)
+    if (req.body?.applied_via !== undefined) updates.applied_via = sanitizeText(req.body.applied_via, 200)
+    if (req.body?.application_date !== undefined) updates.application_date = parseDateLoose(req.body.application_date)
+    if (req.body?.saved_date !== undefined) updates.saved_date = parseDateLoose(req.body.saved_date)
+    if (req.body?.follow_up_date !== undefined) updates.follow_up_date = sanitizeText(req.body.follow_up_date, 20)
+    if (req.body?.hiring_manager !== undefined) updates.hiring_manager = sanitizeText(req.body.hiring_manager, 200)
+    if (req.body?.recruiter_name !== undefined) updates.recruiter_name = sanitizeText(req.body.recruiter_name, 200)
+    if (req.body?.recruiter_contact !== undefined) updates.recruiter_contact = sanitizeText(req.body.recruiter_contact, 200)
+    if (req.body?.resume_name !== undefined) updates.resume_name = sanitizeText(req.body.resume_name, 500)
+    if (req.body?.question_count !== undefined) updates.question_count = Number.isFinite(req.body.question_count) ? req.body.question_count : null
+    if (req.body?.screening_summary !== undefined) updates.screening_summary = sanitizeText(req.body.screening_summary, 1000)
+    if (req.body?.notes !== undefined) updates.notes = sanitizeText(req.body.notes, 3000)
+
+    const { data, error } = await supabaseAdmin
+      .from('job_applications')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', req.user.id)
+      .select('*')
+      .single()
+
+    if (error) return res.status(400).json({ error: error.message })
+    res.json({ entry: data })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete('/job-applications/:id', requireAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { error } = await supabaseAdmin
+      .from('job_applications')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', req.user.id)
+
+    if (error) return res.status(400).json({ error: error.message })
+    res.json({ success: true })
   } catch (err) {
     next(err)
   }

@@ -11,7 +11,10 @@ const fileMapping = {
   invitations: ['invitations.csv'],
   adtargeting: ['ad_targeting.csv'],
   inferences: ['inferences_about_you.csv', 'inferences.csv'],
-  shares: ['shares.csv']
+  shares: ['shares.csv'],
+  searchQueries: ['searchqueries.csv'],
+  jobApplications: ['job applications.csv'],
+  savedJobs: ['saved jobs.csv']
 }
 
 function getFileName(path) {
@@ -109,7 +112,10 @@ export async function extractLinkedInZip(file) {
     invitations: [],
     adtargeting: [],
     inferences: [],
-    shares: []
+    shares: [],
+    searchQueries: [],
+    jobApplications: [],
+    savedJobs: []
   }
 
   const fileStatus = {}
@@ -371,6 +377,10 @@ function buildAnalytics(contacts, rawData, companyIndex, endorserIndex, customCa
 export function prepareDataForAPI(rawData) {
   const MAX_CONNECTIONS = 1500
   const MAX_SHARES = 100
+  const MAX_JOB_APPLICATIONS = 200
+  const MAX_SAVED_JOBS = 200
+  const MAX_SEARCH_QUERIES = 40
+  const MAX_TARGET_COMPANIES = 60
 
   // Build message index (name → count + lastDate) instead of full message bodies
   const messageIndex = {}
@@ -409,6 +419,43 @@ export function prepareDataForAPI(rawData) {
     shares = shares.slice(0, MAX_SHARES)
   }
 
+  // Job applications: keep only fields needed for strategic insight
+  let jobApplications = (rawData.jobApplications || []).map(a => ({
+    'Application Date': a['Application Date'] || '',
+    'Company Name': a['Company Name'] || '',
+    'Job Title': a['Job Title'] || '',
+  }))
+  if (jobApplications.length > MAX_JOB_APPLICATIONS) {
+    jobApplications = jobApplications.slice(0, MAX_JOB_APPLICATIONS)
+  }
+
+  // Saved jobs: keep only fields needed for intent signals
+  let savedJobs = (rawData.savedJobs || []).map(j => ({
+    'Saved Date': j['Saved Date'] || '',
+    'Company Name': j['Company Name'] || '',
+    'Job Title': j['Job Title'] || '',
+  }))
+  if (savedJobs.length > MAX_SAVED_JOBS) {
+    savedJobs = savedJobs.slice(0, MAX_SAVED_JOBS)
+  }
+
+  // Search queries: summarize instead of sending raw 1:1 rows
+  const searchCounts = {}
+  ;(rawData.searchQueries || []).forEach(s => {
+    const q = (s['Search Query'] || s['search query'] || '').trim().toLowerCase()
+    if (!q) return
+    searchCounts[q] = (searchCounts[q] || 0) + 1
+  })
+  const searchQuerySummary = Object.entries(searchCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_SEARCH_QUERIES)
+    .map(([query, count]) => ({ query, count }))
+
+  const targetCompanies = (rawData.targetCompanies || [])
+    .map(c => (typeof c === 'string' ? c.trim() : '').trim())
+    .filter(Boolean)
+    .slice(0, MAX_TARGET_COMPANIES)
+
   return {
     connections,
     messageIndex,
@@ -418,6 +465,11 @@ export function prepareDataForAPI(rawData) {
     recommendations: rawData.recommendations || [],
     shares,
     totalShares: (rawData.shares || []).length,
+    jobApplications,
+    savedJobs,
+    searchQuerySummary,
+    targetCompanies,
+    totalSearchQueries: (rawData.searchQueries || []).length,
     inferences: rawData.inferences || [],
     adtargeting: rawData.adtargeting || [],
     // Deliberately NOT sending: positions, invitations, raw message content

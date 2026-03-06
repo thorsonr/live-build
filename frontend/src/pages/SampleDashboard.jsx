@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../lib/ThemeContext'
 import NetworkAnalytics from '../components/NetworkAnalytics'
@@ -39,6 +39,7 @@ const sections = [
     subTabs: [
       { id: 'priorities', label: 'Priorities' },
       { id: 'messages', label: 'Messages' },
+      { id: 'applications', label: 'Applications' },
       { id: 'tracker', label: 'Tracker' },
     ]
   },
@@ -51,29 +52,47 @@ export default function SampleDashboard() {
   const { theme, setTheme } = useTheme()
   const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
+  const resolveTabTarget = (targetTab) => {
+    for (const section of sections) {
+      if (section.id === targetTab) {
+        const defaultSubTab = section.subTabs?.[0]?.id || null
+        return { sectionId: section.id, subTabId: defaultSubTab, hash: section.id }
+      }
+      const sub = section.subTabs?.find(st => st.id === targetTab)
+      if (sub) {
+        return { sectionId: section.id, subTabId: sub.id, hash: sub.id }
+      }
+    }
+    return null
+  }
+
   const handleSectionClick = (sectionId) => {
     setActiveSection(sectionId)
     const section = sections.find(s => s.id === sectionId)
-    setActiveSubTab(section?.subTabs?.length ? section.subTabs[0].id : null)
+    const nextSubTab = section?.subTabs?.length ? section.subTabs[0].id : null
+    setActiveSubTab(nextSubTab)
+    window.history.replaceState(null, '', nextSubTab ? `#${nextSubTab}` : `#${sectionId}`)
   }
 
   const currentSection = sections.find(s => s.id === activeSection)
   const activeTab = activeSection === 'summary' ? 'summary' : activeSubTab
 
   const handleNavigate = (targetTab) => {
-    for (const section of sections) {
-      if (section.id === targetTab) {
-        handleSectionClick(section.id)
-        return
-      }
-      const sub = section.subTabs?.find(st => st.id === targetTab)
-      if (sub) {
-        setActiveSection(section.id)
-        setActiveSubTab(sub.id)
-        return
-      }
-    }
+    const resolved = resolveTabTarget(targetTab)
+    if (!resolved) return
+    setActiveSection(resolved.sectionId)
+    setActiveSubTab(resolved.subTabId)
+    window.history.replaceState(null, '', `#${resolved.hash}`)
   }
+
+  useEffect(() => {
+    const target = window.location.hash.replace('#', '')
+    if (!target) return
+    const resolved = resolveTabTarget(target)
+    if (!resolved) return
+    setActiveSection(resolved.sectionId)
+    setActiveSubTab(resolved.subTabId)
+  }, [])
 
   return (
     <div>
@@ -136,7 +155,7 @@ export default function SampleDashboard() {
               {currentSection.subTabs.map((sub) => (
                 <button
                   key={sub.id}
-                  onClick={() => setActiveSubTab(sub.id)}
+                  onClick={() => handleNavigate(sub.id)}
                   className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
                     activeSubTab === sub.id
                       ? 'bg-live-bg-warm text-live-text border border-live-border'

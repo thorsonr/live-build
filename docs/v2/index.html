@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LiVE Pro v2 | Network & Job Search Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand-wrap">
+      <div class="brand-mark">LiVE</div>
+      <div>
+        <h1>LiVE Pro v2</h1>
+        <p>LinkedIn network intelligence for serious job search execution</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="badge">Private-first workflow</span>
+      <button id="resetBtn" class="btn btn-ghost">Reset demo data</button>
+    </div>
+  </header>
+
+  <nav class="main-nav" aria-label="Primary">
+    <button class="nav-btn active" data-view="overview">Overview</button>
+    <button class="nav-btn" data-view="insights">Network Insights</button>
+    <button class="nav-btn" data-view="pipeline">Opportunity Pipeline</button>
+    <button class="nav-btn" data-view="tracker">Job Tracker</button>
+  </nav>
+
+  <main class="container">
+    <section id="view-overview" class="view active">
+      <div class="hero">
+        <div>
+          <p class="eyebrow">Version 2 foundation</p>
+          <h2>A clearer path from network data to interviews</h2>
+          <p class="lead">
+            This version prioritizes actionable outcomes: who to contact, when to follow up, and how your pipeline is trending.
+            The goal is not more charts. The goal is better job search decisions.
+          </p>
+        </div>
+        <div class="hero-card">
+          <h3>Execution Health</h3>
+          <div id="healthMeter" class="meter"></div>
+          <p id="healthText" class="muted"></p>
+        </div>
+      </div>
+
+      <section class="stat-grid" id="kpiGrid"></section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h3>What changed in v2</h3>
+        </div>
+        <div class="panel-body split">
+          <div>
+            <h4>Product</h4>
+            <ul>
+              <li>Added a dedicated job-tracker workspace with stage counts and overdue follow-ups.</li>
+              <li>Introduced priority scoring for warm-intro and weak-tie opportunities.</li>
+              <li>Connected network signals to concrete outreach actions.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Design</h4>
+            <ul>
+              <li>Reduced visual noise with fewer competing cards and tighter hierarchy.</li>
+              <li>Replaced novelty styling with a restrained professional system.</li>
+              <li>Improved mobile layout for day-to-day usage, not just demos.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section id="view-insights" class="view">
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Insight Priorities</h3>
+          <p class="muted">Ranked by likely impact on interviews and referrals.</p>
+        </div>
+        <div class="panel-body" id="insightCards"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Intent Fit & Coverage</h3>
+          <p class="muted">How well your current network maps to your active targets.</p>
+        </div>
+        <div class="panel-body">
+          <div class="stat-grid compact" id="intentGrid"></div>
+          <div class="table-wrap" style="margin-top: 10px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Target Company</th>
+                  <th>Known Contacts</th>
+                  <th>Warm Paths</th>
+                  <th>Coverage Signal</th>
+                </tr>
+              </thead>
+              <tbody id="coverageTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Priority Contacts</h3>
+          <p class="muted">High signal contacts to message this week.</p>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Contact</th>
+                  <th>Company</th>
+                  <th>Signal</th>
+                  <th>Last Touch</th>
+                  <th>Suggested Action</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="priorityTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section id="view-pipeline" class="view">
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Pipeline Snapshot</h3>
+        </div>
+        <div class="panel-body">
+          <div class="pipeline-grid" id="stageGrid"></div>
+          <div class="stat-grid compact" style="margin-top: 10px;" id="pipelineRiskGrid"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Weekly Focus Queue</h3>
+          <p class="muted">Autogenerated from due follow-ups and stalled applications.</p>
+        </div>
+        <div class="panel-body">
+          <ul class="task-list" id="focusQueue"></ul>
+        </div>
+      </section>
+    </section>
+
+    <section id="view-tracker" class="view">
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Add Application</h3>
+        </div>
+        <div class="panel-body">
+          <form id="applicationForm" class="form-grid">
+            <label>
+              Company
+              <input required name="company" type="text" placeholder="Example: Stripe" />
+            </label>
+            <label>
+              Role
+              <input required name="role" type="text" placeholder="Senior Product Manager" />
+            </label>
+            <label>
+              Source
+              <select name="source">
+                <option value="Referral">Referral</option>
+                <option value="Direct Apply">Direct Apply</option>
+                <option value="Recruiter">Recruiter</option>
+                <option value="Alumni">Alumni Intro</option>
+              </select>
+            </label>
+            <label>
+              Stage
+              <select name="stage">
+                <option value="Applied">Applied</option>
+                <option value="Screen">Screen</option>
+                <option value="Interview">Interview</option>
+                <option value="Final">Final</option>
+              </select>
+            </label>
+            <label>
+              Applied Date
+              <input required name="appliedDate" type="date" />
+            </label>
+            <label>
+              Next Follow-up
+              <input name="followUpDate" type="date" />
+            </label>
+            <label class="full">
+              Notes
+              <textarea name="notes" rows="2" placeholder="Owner, context, prep notes"></textarea>
+            </label>
+            <button class="btn btn-primary" type="submit">Add application</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Applications</h3>
+          <p class="muted">Editable stages and follow-up dates. Stored in local browser state.</p>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Role</th>
+                  <th>Source</th>
+                  <th>Stage</th>
+                  <th>Applied</th>
+                  <th>Follow-up</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="applicationsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

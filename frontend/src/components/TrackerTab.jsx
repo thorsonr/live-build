@@ -13,6 +13,65 @@ const STATUSES = [
 
 const LOG_TYPES = ['Email', 'Call', 'Text', 'In-Person', 'LinkedIn', 'Other']
 
+function MetricInfoPopover({ title, description, calc, interpretation }) {
+  const [open, setOpen] = useState(false)
+  const wrapperRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    const onPointerDown = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setOpen(false)
+      }
+    }
+
+    const onEscape = (event) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onEscape)
+
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onEscape)
+    }
+  }, [open])
+
+  return (
+    <span ref={wrapperRef} className="relative inline-flex ml-1.5 align-middle">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-live-border text-[10px] font-semibold text-live-text-secondary hover:text-live-text hover:border-live-accent transition-colors"
+        aria-label={`Explain ${title}`}
+        aria-expanded={open}
+      >
+        i
+      </button>
+      {open && (
+        <div className="absolute z-40 top-6 left-0 w-[21rem] max-w-[85vw] card shadow-xl">
+          <div className="card-body py-3 px-3 space-y-2">
+            <div>
+              <div className="text-xs font-semibold text-live-accent">What this means</div>
+              <p className="text-sm text-live-text">{description}</p>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-live-text-secondary">How it is calculated</div>
+              <p className="text-xs text-live-text-secondary">{calc}</p>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-live-text-secondary">How to use it</div>
+              <p className="text-xs text-live-text-secondary">{interpretation}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </span>
+  )
+}
+
 function DroppableColumn({ id, children, isOver }) {
   const { setNodeRef } = useDroppable({ id })
   return (
@@ -399,6 +458,13 @@ export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = 
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
+  const daysSince = (dateStr) => {
+    if (!dateStr) return null
+    const d = new Date(dateStr)
+    if (Number.isNaN(d.getTime())) return null
+    return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24))
+  }
+
   if (loading) {
     return (
       <div>
@@ -423,6 +489,16 @@ export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = 
     acc[s.id] = entries.filter(e => e.status === s.id)
     return acc
   }, {})
+
+  const staleActiveCount = entries.filter(e => {
+    if (e.status === 'closed' || e.status === 'parked') return false
+    const days = daysSince(e.last_action_at)
+    return days !== null && days > 14
+  }).length
+
+  const meetingPipelineCount = (grouped.meeting?.length || 0) + (grouped.replied?.length || 0)
+  const activePipelineCount = entries.filter(e => e.status !== 'closed' && e.status !== 'parked').length
+  const pipelineRisk = Math.min(100, staleActiveCount * 18 + Math.max(0, activePipelineCount - meetingPipelineCount) * 6)
 
   return (
     <div>
@@ -454,6 +530,68 @@ export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = 
           >
             + Add Contact
           </button>
+        </div>
+      </div>
+
+      {/* Pipeline Health */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="card">
+          <div className="card-body py-4">
+            <div className={`text-2xl font-light ${pipelineRisk >= 45 ? 'text-live-danger' : pipelineRisk >= 20 ? 'text-live-warning' : 'text-live-success'}`}>
+              {pipelineRisk}
+            </div>
+            <div className="text-xs text-live-text-secondary">
+              Pipeline risk
+              <MetricInfoPopover
+                title="Pipeline risk"
+                description="A higher score means your active pipeline is at risk of stalling."
+                calc="Built from stale active contacts and the gap between active outreach and contacts that reached replied/meeting stages."
+                interpretation="If this rises, prioritize follow-ups and push more contacts into reply or meeting status."
+              />
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-body py-4">
+            <div className="text-2xl font-light">{activePipelineCount}</div>
+            <div className="text-xs text-live-text-secondary">
+              Active contacts
+              <MetricInfoPopover
+                title="Active contacts"
+                description="People you are currently working through in outreach."
+                calc="All tracker entries excluding contacts marked closed or parked."
+                interpretation="Keep this focused on contacts you can realistically move this week."
+              />
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-body py-4">
+            <div className="text-2xl font-light text-live-warning">{staleActiveCount}</div>
+            <div className="text-xs text-live-text-secondary">
+              Stale active (&gt;14 days)
+              <MetricInfoPopover
+                title="Stale active"
+                description="Active contacts that have gone quiet for over two weeks."
+                calc="Active entries where the last logged action is older than 14 days."
+                interpretation="These should be your first follow-up targets to prevent pipeline decay."
+              />
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-body py-4">
+            <div className="text-2xl font-light text-live-accent">{meetingPipelineCount}</div>
+            <div className="text-xs text-live-text-secondary">
+              Replied + meeting
+              <MetricInfoPopover
+                title="Replied + meeting"
+                description="Contacts who have engaged and are moving deeper into your funnel."
+                calc="Count of entries currently in Replied plus Meeting statuses."
+                interpretation="This is your momentum indicator. Grow it with quality outreach and timely follow-up."
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -623,6 +761,17 @@ export default function TrackerTab({ sampleMode = false, sampleTrackerEntries = 
               <div className="card-body">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
+                    {(() => {
+                      const days = daysSince(entry.last_action_at)
+                      const stale = days !== null && days > 14 && entry.status !== 'closed' && entry.status !== 'parked'
+                      return stale ? (
+                        <div className="mb-1">
+                          <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-live-warning/20 text-live-warning font-medium">
+                            Stale follow-up
+                          </span>
+                        </div>
+                      ) : null
+                    })()}
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-semibold text-sm text-live-text">{entry.contact_name}</p>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusConfig(entry.status).color}`}>

@@ -47,6 +47,7 @@ export default function FileUpload({ onDataLoaded }) {
 
   const handleDrop = async (e) => {
     e.preventDefault()
+    if (status === 'extracting') return
     const file = e.dataTransfer.files[0]
     await extractFile(file)
   }
@@ -65,10 +66,10 @@ export default function FileUpload({ onDataLoaded }) {
       return
     }
 
-    // Check file size (1.5MB limit)
-    const maxSize = 1.5 * 1024 * 1024 // 1.5MB in bytes
+    // Check file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024
     if (file.size > maxSize) {
-      setError(`File too large. Maximum size is 1.5MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`)
+      setError(`File too large. Maximum size is 5MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`)
       setStatus('error')
       return
     }
@@ -110,19 +111,31 @@ export default function FileUpload({ onDataLoaded }) {
   }
 
   // Step 2a: User submits context — run AI analysis
-  const handleContextSubmit = async (userContext) => {
+  const handleContextSubmit = async (contextPayload) => {
     setStatus('aiAnalyzing')
     setAiError('')
 
     try {
+      const userContext = typeof contextPayload === 'string'
+        ? contextPayload
+        : (contextPayload?.contextText || '')
+      const contextTargetCompanies = Array.isArray(contextPayload?.targetCompanies)
+        ? contextPayload.targetCompanies
+        : []
+      const rawDataWithContext = {
+        ...rawData,
+        targetCompanies: contextTargetCompanies,
+      }
+
       const response = await api.analyzeNetwork({
-        rawData: prepareDataForAPI(rawData),
+        rawData: prepareDataForAPI(rawDataWithContext),
         userContext,
       })
 
       // Merge AI analysis with local result
       onDataLoaded({
         ...localResult,
+        rawData: rawDataWithContext,
         aiAnalysis: response.analysis,
       })
     } catch (err) {
@@ -217,7 +230,7 @@ export default function FileUpload({ onDataLoaded }) {
     return (
       <div className="max-w-3xl mx-auto">
         <div className="card">
-          <div className="card-body p-10">
+          <div className="card-body p-5 md:p-10">
             <h2 className="font-display text-2xl font-semibold text-center mb-2">
               Visualize Your LinkedIn Network
             </h2>
@@ -231,6 +244,15 @@ export default function FileUpload({ onDataLoaded }) {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => status !== 'extracting' && fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && status !== 'extracting') {
+                  e.preventDefault()
+                  fileInputRef.current?.click()
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Upload LinkedIn export ZIP file"
             >
               <div className="text-5xl mb-3">
                 {status === 'extracting' ? '\u23F3' : status === 'dragover' ? '\uD83D\uDCE5' : '\uD83D\uDCE6'}
@@ -241,6 +263,20 @@ export default function FileUpload({ onDataLoaded }) {
               <p className="text-sm text-live-text-secondary">
                 {status === 'extracting' ? fileName : 'or click to select file'}
               </p>
+              {status !== 'extracting' && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      fileInputRef.current?.click()
+                    }}
+                  >
+                    Choose ZIP file
+                  </button>
+                </div>
+              )}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -249,6 +285,10 @@ export default function FileUpload({ onDataLoaded }) {
                 className="hidden"
               />
             </div>
+
+            <p className="mt-3 text-xs text-live-text-secondary text-center">
+              Supports LinkedIn export ZIP files up to 5MB.
+            </p>
 
             <div className="mt-6 p-4 rounded-lg bg-live-success/10 text-live-success text-sm">
               <strong>Local Processing:</strong> Your files are processed locally in your browser.

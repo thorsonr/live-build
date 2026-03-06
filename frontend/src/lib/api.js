@@ -64,6 +64,12 @@ export const api = {
   addToTracker: (entry) => request('/api/data/tracker', { method: 'POST', body: JSON.stringify(entry) }),
   updateTracker: (id, updates) => request(`/api/data/tracker/${id}`, { method: 'PATCH', body: JSON.stringify(updates) }),
   removeFromTracker: (id) => request(`/api/data/tracker/${id}`, { method: 'DELETE' }),
+  getJobApplications: (params = {}) => request(`/api/data/job-applications?${new URLSearchParams(params)}`),
+  importJobApplications: (payload) => request('/api/data/job-applications/import', { method: 'POST', body: JSON.stringify(payload) }),
+  parseJobApplicationUrl: (url) => request('/api/data/job-applications/parse-url', { method: 'POST', body: JSON.stringify({ url }) }),
+  createJobApplication: (entry) => request('/api/data/job-applications', { method: 'POST', body: JSON.stringify(entry) }),
+  updateJobApplication: (id, updates) => request(`/api/data/job-applications/${id}`, { method: 'PATCH', body: JSON.stringify(updates) }),
+  removeJobApplication: (id) => request(`/api/data/job-applications/${id}`, { method: 'DELETE' }),
 
   // AI
   analyzeNetwork: (data) => request('/api/ai/analyze', {

@@ -34,6 +34,9 @@ export function prepareDataForAI(rawData, userName) {
   // Only check files that are actually used in the AI analysis
   const fileChecks = [
     { key: 'connections', label: 'Connections.csv' },
+    { key: 'jobApplications', label: 'Jobs/Job Applications.csv' },
+    { key: 'savedJobs', label: 'Jobs/Saved Jobs.csv' },
+    { key: 'searchQuerySummary', label: 'SearchQueries.csv' },
     { key: 'skills', label: 'Skills.csv' },
     { key: 'endorsements', label: 'Endorsement_Received_Info.csv' },
     { key: 'recommendations', label: 'Recommendations_Received.csv' },
@@ -151,6 +154,12 @@ export function prepareDataForAI(rawData, userName) {
   }
   summary.total_posts = shares.length
 
+  // Job intent data (already trimmed/summarized by frontend)
+  summary.jobApplications = rawData.jobApplications || []
+  summary.savedJobs = rawData.savedJobs || []
+  summary.searchQuerySummary = rawData.searchQuerySummary || []
+  summary.total_search_queries = rawData.totalSearchQueries || 0
+
   // Inferences — full data (small)
   summary.inferences = rawData.inferences || []
 
@@ -225,6 +234,19 @@ export function buildIngestionPrompt(dataSummary, userContext) {
     userMessage += `### Posts/Shares (${dataSummary.shares.length}${dataSummary.shares_note ? ' — ' + dataSummary.shares_note : ''})\n\`\`\`json\n${JSON.stringify(dataSummary.shares, null, 0)}\n\`\`\`\n\n`
   }
 
+  // Job search intent signals
+  if (dataSummary.jobApplications.length > 0) {
+    const appFields = ['Application Date', 'Company Name', 'Job Title']
+    userMessage += `### Job Applications (${dataSummary.jobApplications.length}, pipe-delimited)\n\`\`\`\n${toPipeDelimited(dataSummary.jobApplications, appFields)}\n\`\`\`\n\n`
+  }
+  if (dataSummary.savedJobs.length > 0) {
+    const savedFields = ['Saved Date', 'Company Name', 'Job Title']
+    userMessage += `### Saved Jobs (${dataSummary.savedJobs.length}, pipe-delimited)\n\`\`\`\n${toPipeDelimited(dataSummary.savedJobs, savedFields)}\n\`\`\`\n\n`
+  }
+  if (dataSummary.searchQuerySummary.length > 0) {
+    userMessage += `### Search Query Summary (${dataSummary.searchQuerySummary.length} top queries from ${dataSummary.total_search_queries} total)\n\`\`\`\n${toPipeDelimited(dataSummary.searchQuerySummary, ['query', 'count'])}\n\`\`\`\n\n`
+  }
+
   // Inferences — JSON (small dataset)
   if (dataSummary.inferences.length > 0) {
     userMessage += `### Inferences About You (${dataSummary.inferences.length})\n\`\`\`json\n${JSON.stringify(dataSummary.inferences, null, 0)}\n\`\`\`\n\n`
@@ -241,5 +263,5 @@ export function buildIngestionPrompt(dataSummary, userContext) {
 }
 
 function getDefaultPrompt() {
-  return `You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intelligence tool. Your tone should be that of an encouraging strategic advisor — professionally warm, constructive, and focused on untapped potential rather than criticism. All text must be plain text only — no markdown formatting (no **bold**, no *italics*, no bullet points). Analyze the provided LinkedIn data export and return a JSON response. For screens 1-6 (summary, network, relationships, skills_expertise, your_content, your_advocates), return ONLY editorial insight fields — no computed stats, charts, or category breakdowns. For the summary screen, also include do_next_items (3-5 actionable items with action, why, target_tab) and top_opportunities (top 3 contacts with name, company, role, reason, suggested_action). For screens 2-6, return each editorial insight as a structured object with key_insight, why_it_matters, and suggested_action fields. For screens 7-8 (priorities, linkedins_view), return full AI-generated output including outreach priorities and inference analysis. Skip screen 9 (all_contacts) — it is computed locally. Return only valid JSON.`
+  return `You are the analytics engine behind LiVE Pro, a paid professional LinkedIn intelligence tool. Your tone should be that of an encouraging strategic advisor — professionally warm, constructive, and focused on untapped potential rather than criticism. All text must be plain text only — no markdown formatting (no **bold**, no *italics*, no bullet points). Analyze the provided LinkedIn data export and return a JSON response. For screens 1-6 (summary, network, relationships, skills_expertise, your_content, your_advocates), return ONLY editorial insight fields — no computed stats, charts, or category breakdowns. If job intent data is present (applications, saved jobs, search queries), use it to inform priorities and recommended actions. For the summary screen, also include do_next_items (3-5 actionable items with action, why, target_tab) and top_opportunities (top 3 contacts with name, company, role, reason, suggested_action). For screens 2-6, return each editorial insight as a structured object with key_insight, why_it_matters, and suggested_action fields. For screens 7-8 (priorities, linkedins_view), return full AI-generated output including outreach priorities and inference analysis. Skip screen 9 (all_contacts) — it is computed locally. Return only valid JSON.`
 }

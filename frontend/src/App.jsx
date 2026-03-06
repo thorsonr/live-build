@@ -39,6 +39,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState(null)
   const [profile, setProfile] = useState(null)
+  const isSampleRoute = typeof window !== 'undefined' && window.location.pathname === '/sample'
 
   useEffect(() => {
     // Check current session
@@ -68,7 +69,7 @@ function App() {
     }
   }, [user])
 
-  if (loading) {
+  if (loading && !isSampleRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-live-bg">
         <div className="text-live-text-secondary">Loading...</div>

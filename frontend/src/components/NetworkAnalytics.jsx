@@ -6,6 +6,7 @@ import StrategyAnalysis from './StrategyAnalysis'
 import AIInsightCard, { stripMarkdown } from './AIInsightCard'
 import MessageGenerator from './MessageGenerator'
 import TrackerTab from './TrackerTab'
+import ApplicationsTab from './ApplicationsTab'
 import { api } from '../lib/api'
 
 /**
@@ -75,8 +76,67 @@ function SampleCTAModal({ onClose }) {
   )
 }
 
+function MetricInfoPopover({ title, description, calc, interpretation }) {
+  const [open, setOpen] = useState(false)
+  const wrapperRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    const onPointerDown = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setOpen(false)
+      }
+    }
+
+    const onEscape = (event) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onEscape)
+
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onEscape)
+    }
+  }, [open])
+
+  return (
+    <span ref={wrapperRef} className="relative inline-flex ml-1.5 align-middle">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-live-border text-[10px] font-semibold text-live-text-secondary hover:text-live-text hover:border-live-accent transition-colors"
+        aria-label={`Explain ${title}`}
+        aria-expanded={open}
+      >
+        i
+      </button>
+      {open && (
+        <div className="absolute z-40 top-6 left-0 w-[21rem] max-w-[85vw] card shadow-xl">
+          <div className="card-body py-3 px-3 space-y-2">
+            <div>
+              <div className="text-xs font-semibold text-live-accent">What this means</div>
+              <p className="text-sm text-live-text">{description}</p>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-live-text-secondary">How it is calculated</div>
+              <p className="text-xs text-live-text-secondary">{calc}</p>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-live-text-secondary">How to use it</div>
+              <p className="text-xs text-live-text-secondary">{interpretation}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </span>
+  )
+}
+
 export default function NetworkAnalytics({ data, activeTab, user, settings, profile, onExportCSV, sampleMode = false, sampleMessages = null, sampleTrackerEntries = null, onNavigate }) {
-  const { contacts, analytics, aiAnalysis } = data
+  const { contacts, analytics, aiAnalysis, rawData } = data
   const [selectedContact, setSelectedContact] = useState(null)
   const [preselectedContact, setPreselectedContact] = useState(null)
   const [showStrategy, setShowStrategy] = useState(false)
@@ -122,7 +182,15 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, prof
         <AdvocatesTab analytics={analytics} aiScreen={ai('your_advocates')} />
       )}
       {activeTab === 'priorities' && (
-        <PrioritiesTab analytics={analytics} contacts={contacts} aiScreen={ai('priorities')} settings={settings} />
+        <PrioritiesTab
+          analytics={analytics}
+          contacts={contacts}
+          aiScreen={ai('priorities')}
+          settings={settings}
+          rawData={rawData}
+          sampleMode={sampleMode}
+          onNavigate={onNavigate}
+        />
       )}
       {activeTab === 'messages' && (
         <MessageGenerator
@@ -134,6 +202,9 @@ export default function NetworkAnalytics({ data, activeTab, user, settings, prof
           sampleMode={sampleMode}
           sampleMessages={sampleMessages}
         />
+      )}
+      {activeTab === 'applications' && (
+        <ApplicationsTab rawData={rawData} sampleMode={sampleMode} />
       )}
       {activeTab === 'tracker' && (
         settings?.show_tracker ? (
@@ -1067,11 +1138,16 @@ function AdvocatesTab({ analytics, aiScreen }) {
 // ============================================
 // PRIORITIES TAB
 // ============================================
-function PrioritiesTab({ analytics, contacts, aiScreen, settings }) {
+function PrioritiesTab({ analytics, contacts, aiScreen, settings, rawData = {}, sampleMode = false, onNavigate }) {
   const [trackerAdded, setTrackerAdded] = useState({})
 
   const handleAddToTracker = async (contact) => {
     if (!settings?.show_tracker) return
+    if (sampleMode) {
+      setTrackerAdded(prev => ({ ...prev, [contact.name]: true }))
+      onNavigate?.('tracker')
+      return
+    }
     try {
       await api.addToTracker({
         contact_name: contact.name,
@@ -1088,6 +1164,60 @@ function PrioritiesTab({ analytics, contacts, aiScreen, settings }) {
   // Use AI priorities if available, otherwise fall back to local scoring
   const aiPriorities = aiScreen?.outreach_priorities || null
   const aiPlaybooks = aiScreen?.revival_playbooks || null
+
+  const jobApplications = rawData?.jobApplications || []
+  const savedJobs = rawData?.savedJobs || []
+  const searchQuerySummary = rawData?.searchQuerySummary || []
+  const contextTargetCompanies = rawData?.targetCompanies || []
+  const aiTargetCompanies = aiScreen?.target_companies || []
+
+  const companyFromAny = (value) => {
+    if (!value) return ''
+    if (typeof value === 'string') return value.trim()
+    return (value.company || value.name || value['Company Name'] || '').trim()
+  }
+
+  const targetCompanies = Array.from(new Set([
+    ...jobApplications.map(a => companyFromAny(a['Company Name'] || a.Company)),
+    ...savedJobs.map(s => companyFromAny(s['Company Name'] || s.Company)),
+    ...contextTargetCompanies.map(companyFromAny),
+    ...aiTargetCompanies.map(companyFromAny),
+  ].filter(Boolean)))
+
+  const coverageRows = targetCompanies.map(company => {
+    const companyContacts = contacts.filter(c => (c.company || '').toLowerCase() === company.toLowerCase())
+    const warmPaths = companyContacts.filter(c => c.relStrength === 'strong' || c.relStrength === 'warm').length
+    let signal = 'No path'
+    if (warmPaths >= 2) signal = 'Strong'
+    else if (warmPaths === 1) signal = 'Moderate'
+    else if (companyContacts.length > 0) signal = 'Cold only'
+    return {
+      company,
+      knownContacts: companyContacts.length,
+      warmPaths,
+      signal,
+    }
+  })
+
+  const companiesWithPath = coverageRows.filter(r => r.knownContacts > 0).length
+  const coveragePct = targetCompanies.length > 0 ? Math.round((companiesWithPath / targetCompanies.length) * 100) : 0
+
+  const tokenize = (text) => (text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+
+  const stopWords = new Set(['and', 'the', 'for', 'with', 'of', 'to', 'in', 'at', 'on', 'a', 'an'])
+  const queryTerms = new Set(searchQuerySummary.flatMap(q => tokenize(q.query)).filter(t => t.length >= 3 && !stopWords.has(t)))
+
+  const alignedApps = jobApplications.filter(a => {
+    const roleTerms = tokenize(a['Job Title'] || a.Title || '').filter(t => t.length >= 3 && !stopWords.has(t))
+    if (roleTerms.length === 0 || queryTerms.size === 0) return false
+    const overlap = roleTerms.filter(term => queryTerms.has(term)).length
+    return overlap >= Math.max(1, Math.ceil(roleTerms.length * 0.25))
+  }).length
+  const intentFit = jobApplications.length > 0 ? Math.round((alignedApps / jobApplications.length) * 100) : 0
 
   // Local scoring fallback
   const scored = contacts.map(c => {
@@ -1113,6 +1243,88 @@ function PrioritiesTab({ analytics, contacts, aiScreen, settings }) {
       <div className="section-label">Strategic Action</div>
       <h2 className="section-title mb-2">Where the Leverage Is</h2>
       <p className="text-live-text-secondary mb-6">Prioritized contacts based on strategic value and relationship status.</p>
+
+      {/* Priority Table */}
+      {(targetCompanies.length > 0 || searchQuerySummary.length > 0) && (
+        <div className="card mb-6">
+          <div className="card-header">Intent Fit & Coverage</div>
+          <div className="card-body">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+              <div className="card">
+                <div className="card-body py-4">
+                  <div className="text-2xl font-light">{intentFit}%</div>
+                  <div className="text-xs text-live-text-secondary">
+                    Intent Fit Score
+                    <MetricInfoPopover
+                      title="Intent Fit Score"
+                      description="This tells you whether the jobs you applied to match the type of role you say you want."
+                      calc="We compare each applied job title with the role language in your recent job searches, then calculate the percent that match."
+                      interpretation="Higher is better. If this is low, tighten your role focus before sending more applications."
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="card">
+                <div className="card-body py-4">
+                  <div className="text-2xl font-light">{targetCompanies.length}</div>
+                  <div className="text-xs text-live-text-secondary">
+                    Target Companies
+                    <MetricInfoPopover
+                      title="Target Companies"
+                      description="How many companies are in scope right now for your job search."
+                      calc="We combine unique company names from your applications, saved jobs, and any target company list you provide in your analysis brief."
+                      interpretation="Use this to keep focus. Too many targets usually dilutes outreach quality."
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="card col-span-2 md:col-span-1">
+                <div className="card-body py-4">
+                  <div className="text-2xl font-light">{coveragePct}%</div>
+                  <div className="text-xs text-live-text-secondary">
+                    Coverage With Any Path
+                    <MetricInfoPopover
+                      title="Coverage With Any Path"
+                      description="Percent of target companies where you already have at least one known contact path."
+                      calc="Target companies with one or more known contacts / total target companies."
+                      interpretation="Higher means faster warm outreach potential. Low coverage means your next move is building intros for uncovered companies."
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-xs uppercase text-live-text-secondary border-b border-live-border">
+                    <th className="pb-3 pr-4">Target Company</th>
+                    <th className="pb-3 pr-4">Known Contacts</th>
+                    <th className="pb-3 pr-4">Warm Paths</th>
+                    <th className="pb-3">Coverage Signal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {coverageRows.length > 0 ? coverageRows.map((row) => (
+                    <tr key={row.company} className="border-b border-live-border">
+                      <td className="py-3 pr-4 font-medium">{row.company}</td>
+                      <td className="py-3 pr-4 text-sm">{row.knownContacts}</td>
+                      <td className="py-3 pr-4 text-sm">{row.warmPaths}</td>
+                      <td className="py-3 text-sm">{row.signal}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={4} className="py-4 text-sm text-live-text-secondary">
+                        Add job applications/saved jobs to calculate company path coverage.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Priority Table */}
       <div className="card mb-6">
@@ -1156,7 +1368,7 @@ function PrioritiesTab({ analytics, contacts, aiScreen, settings }) {
                           disabled={trackerAdded[p.name]}
                           className="text-xs px-2 py-1 border border-live-border rounded hover:bg-live-bg-warm disabled:opacity-50 transition-colors"
                         >
-                          {trackerAdded[p.name] ? 'Added' : '+ Track'}
+                          {trackerAdded[p.name] ? 'Added' : 'Create follow-up'}
                         </button>
                       </td>
                     )}
@@ -1188,7 +1400,7 @@ function PrioritiesTab({ analytics, contacts, aiScreen, settings }) {
                           disabled={trackerAdded[c.name]}
                           className="text-xs px-2 py-1 border border-live-border rounded hover:bg-live-bg-warm disabled:opacity-50 transition-colors"
                         >
-                          {trackerAdded[c.name] ? 'Added' : '+ Track'}
+                          {trackerAdded[c.name] ? 'Added' : 'Create follow-up'}
                         </button>
                       </td>
                     )}

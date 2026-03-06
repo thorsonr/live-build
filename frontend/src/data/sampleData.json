@@ -35292,6 +35292,62 @@
       }
     }
   },
+  "rawData": {
+    "jobApplications": [
+      {
+        "Application Date": "2026-01-12",
+        "Company Name": "Vertex Labs",
+        "Job Title": "VP Operations"
+      },
+      {
+        "Application Date": "2026-01-20",
+        "Company Name": "Forge Analytics",
+        "Job Title": "Director of Revenue Operations"
+      },
+      {
+        "Application Date": "2026-02-01",
+        "Company Name": "Summit Partners",
+        "Job Title": "Managing Director, Corporate Development"
+      },
+      {
+        "Application Date": "2026-02-09",
+        "Company Name": "Atlas Digital",
+        "Job Title": "Senior Director, Customer Success"
+      },
+      {
+        "Application Date": "2026-02-17",
+        "Company Name": "Nexus Dynamics",
+        "Job Title": "General Manager, North America"
+      }
+    ],
+    "savedJobs": [
+      {
+        "Saved Date": "2026-02-11",
+        "Company Name": "Pinnacle Solutions",
+        "Job Title": "VP Finance"
+      },
+      {
+        "Saved Date": "2026-02-14",
+        "Company Name": "Propel Solutions",
+        "Job Title": "Director of Product Marketing"
+      }
+    ],
+    "searchQuerySummary": [
+      { "query": "head of transformation", "count": 22 },
+      { "query": "vice president innovation", "count": 18 },
+      { "query": "chief strategy officer", "count": 11 },
+      { "query": "director of artificial intelligence", "count": 9 }
+    ],
+    "targetCompanies": [
+      "Vertex Labs",
+      "Forge Analytics",
+      "Summit Partners",
+      "Atlas Digital",
+      "Nexus Dynamics",
+      "Northwind Health",
+      "BlueWave Energy"
+    ]
+  },
   "sampleMessages": {
     "contact": {
       "name": "River Zhang",

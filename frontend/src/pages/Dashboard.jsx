@@ -31,6 +31,7 @@ export default function Dashboard({ user, settings, profile }) {
       subTabs: [
         { id: 'priorities', label: 'Priorities' },
         { id: 'messages', label: 'Messages' },
+        { id: 'applications', label: 'Applications' },
         { id: 'tracker', label: 'Tracker', gated: true },
       ]
     },
