@@ -9,9 +9,9 @@ const router = Router()
 
 // Full network analysis via AI
 router.post('/analyze', requireAuth, async (req, res, next) => {
-  // Set 180-second timeout for this endpoint
-  req.setTimeout(180000)
-  res.setTimeout(180000)
+  // Full analysis can run long on larger exports; allow up to 7 minutes.
+  req.setTimeout(420000)
+  res.setTimeout(420000)
 
   try {
     const { rawData, userContext } = req.body

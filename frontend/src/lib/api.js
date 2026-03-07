@@ -75,7 +75,7 @@ export const api = {
   analyzeNetwork: (data) => request('/api/ai/analyze', {
     method: 'POST',
     body: JSON.stringify(data),
-    timeout: 180000,
+    timeout: 420000,
   }),
   generateOutreach: (data) => request('/api/ai/outreach-draft', { method: 'POST', body: JSON.stringify(data) }),
   generateStrategy: (data) => request('/api/ai/strategy', { method: 'POST', body: JSON.stringify(data) }),
