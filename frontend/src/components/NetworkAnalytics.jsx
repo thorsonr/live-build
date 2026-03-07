@@ -1140,6 +1140,8 @@ function AdvocatesTab({ analytics, aiScreen }) {
 // ============================================
 function PrioritiesTab({ analytics, contacts, aiScreen, settings, rawData = {}, sampleMode = false, onNavigate }) {
   const [trackerAdded, setTrackerAdded] = useState({})
+  const [showAllCoverageRows, setShowAllCoverageRows] = useState(false)
+  const [selectedCompanyContacts, setSelectedCompanyContacts] = useState(null)
 
   const handleAddToTracker = async (contact) => {
     if (!settings?.show_tracker) return
@@ -1196,8 +1198,18 @@ function PrioritiesTab({ analytics, contacts, aiScreen, settings, rawData = {}, 
       knownContacts: companyContacts.length,
       warmPaths,
       signal,
+      contacts: companyContacts,
     }
+  }).sort((a, b) => {
+    const aHasPath = a.knownContacts > 0 ? 1 : 0
+    const bHasPath = b.knownContacts > 0 ? 1 : 0
+    if (aHasPath !== bHasPath) return bHasPath - aHasPath
+    if (a.warmPaths !== b.warmPaths) return b.warmPaths - a.warmPaths
+    if (a.knownContacts !== b.knownContacts) return b.knownContacts - a.knownContacts
+    return a.company.localeCompare(b.company)
   })
+
+  const visibleCoverageRows = showAllCoverageRows ? coverageRows : coverageRows.slice(0, 7)
 
   const companiesWithPath = coverageRows.filter(r => r.knownContacts > 0).length
   const coveragePct = targetCompanies.length > 0 ? Math.round((companiesWithPath / targetCompanies.length) * 100) : 0
@@ -1305,10 +1317,21 @@ function PrioritiesTab({ analytics, contacts, aiScreen, settings, rawData = {}, 
                   </tr>
                 </thead>
                 <tbody>
-                  {coverageRows.length > 0 ? coverageRows.map((row) => (
+                  {coverageRows.length > 0 ? visibleCoverageRows.map((row) => (
                     <tr key={row.company} className="border-b border-live-border">
                       <td className="py-3 pr-4 font-medium">{row.company}</td>
-                      <td className="py-3 pr-4 text-sm">{row.knownContacts}</td>
+                      <td className="py-3 pr-4 text-sm">
+                        {row.knownContacts > 0 ? (
+                          <button
+                            onClick={() => setSelectedCompanyContacts(row)}
+                            className="text-live-info hover:underline"
+                          >
+                            {row.knownContacts}
+                          </button>
+                        ) : (
+                          <span>{row.knownContacts}</span>
+                        )}
+                      </td>
                       <td className="py-3 pr-4 text-sm">{row.warmPaths}</td>
                       <td className="py-3 text-sm">{row.signal}</td>
                     </tr>
@@ -1322,6 +1345,16 @@ function PrioritiesTab({ analytics, contacts, aiScreen, settings, rawData = {}, 
                 </tbody>
               </table>
             </div>
+            {coverageRows.length > 7 && (
+              <div className="mt-3">
+                <button
+                  onClick={() => setShowAllCoverageRows(v => !v)}
+                  className="text-sm text-live-info hover:underline"
+                >
+                  {showAllCoverageRows ? 'Show top 7' : `Show all (${coverageRows.length})`}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1454,6 +1487,37 @@ function PrioritiesTab({ analytics, contacts, aiScreen, settings, rawData = {}, 
           </div>
         )}
       </div>
+
+      {selectedCompanyContacts && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedCompanyContacts(null)} />
+          <div className="relative w-full max-w-2xl max-h-[80vh] overflow-y-auto card shadow-2xl">
+            <div className="card-header flex items-center justify-between">
+              <span>Contacts at {selectedCompanyContacts.company}</span>
+              <button onClick={() => setSelectedCompanyContacts(null)} className="text-live-text-secondary hover:text-live-text text-xl leading-none">&times;</button>
+            </div>
+            <div className="card-body">
+              {selectedCompanyContacts.contacts.length === 0 ? (
+                <p className="text-sm text-live-text-secondary">No contacts found.</p>
+              ) : (
+                <div className="space-y-2">
+                  {selectedCompanyContacts.contacts.map((c) => (
+                    <div key={c.id || `${c.name}-${c.company}-${c.position || ''}`} className="p-3 rounded-lg border border-live-border">
+                      <div className="font-medium text-sm text-live-text">{c.name}</div>
+                      <div className="text-xs text-live-text-secondary">
+                        {c.position || 'N/A'}
+                      </div>
+                      <div className="text-xs text-live-text-secondary mt-1">
+                        Relationship: {c.relStrength || 'unknown'} {typeof c.messageCount === 'number' ? `• Messages: ${c.messageCount}` : ''}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
